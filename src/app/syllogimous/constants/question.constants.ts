@@ -1,3 +1,4 @@
+// TODO: Add more relations
 export enum EnumQuestionType {
     Distinction = "Distinction",
     ComparisonNumerical = "Comparison Numerical",
@@ -25,7 +26,19 @@ export enum EnumArrangements {
 };
 
 export const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+export const NOT_STRINGS = [
+  // ◉  CIRCLES
+  "🔴","🟠","🟡","🟢","🔵","🟣","🟤","⚫","⚪",
 
+  // ◼  SQUARES
+  "🟥","🟧","🟨","🟩","🟦","🟪","🟫","⬛","⬜",
+
+  // ▲  TRIANGLES
+  "🔺","🔻",
+
+  // ◆  DIAMONDS
+  "🔶","🔷","🔸","🔹"
+]
 export const STRINGS = [
     "QAW",
     "QAR",
@@ -3100,3 +3113,4 @@ export const NOUNS = [
     "Zipper",
     "Zoo"
 ];
+;

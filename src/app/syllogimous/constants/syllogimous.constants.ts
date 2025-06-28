@@ -32,7 +32,7 @@ export enum EnumTiers {
     Sage = "Sage",
     Philosopher = "Philosopher",
     Mystic = "Mystic",
-    Transcendent = "Transcendent",
+    Transcendent = "Von Neumann",
 }
 
 export const TIER_COLORS: Record<EnumTiers, { bgColor: string, textColor: string }> = {

@@ -179,7 +179,7 @@ const expressionVariants = {
             ">", "after", "later than", "post",
             "posterior to", "subsequent", "following",
             "ensuing", "then",
-            "beyond",
+            "beyond", "thenceforth",
             "in the wake of", " the successor of",
             "in front of", "downstream", "chronologically greater"
         ],
@@ -187,6 +187,7 @@ const expressionVariants = {
             "<", "before", "earlier", "prior to",
             "the predecessor of", "ante", "anterior to",
             "pre", "pre-", "in advance of", "ahead of",
+            "erstwhile to", "heretofore", "hitherto",
             "upstream", "past",
             "chronologically less"
         ]
@@ -194,54 +195,22 @@ const expressionVariants = {
 };
 const randomFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-// export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
-//     let positive = "";
-//     let negative = "";
-
-//     switch (type) {
-//         case EnumQuestionType.Distinction:
-//             positive = randomFrom(expressionVariants.Distinction.positive);
-//             negative = randomFrom(expressionVariants.Distinction.negative);
-//             break;
-//         case EnumQuestionType.ComparisonNumerical:
-//             positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
-//             negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
-//             break;
-//         case EnumQuestionType.ComparisonChronological:
-//             positive = randomFrom(expressionVariants.ComparisonChronological.positive);
-//             negative = randomFrom(expressionVariants.ComparisonChronological.negative);
-//             break;
-//     }
-
-//     let relation = isPositive ? positive : negative;
-//     if (settings.enabled.negation && coinFlip()) {
-//         switch (relation) {
-//             case positive:
-//                 relation = `<span class="is-negated">${negative}</span>`;
-//                 break;
-//             case negative:
-//                 relation = `<span class="is-negated">${positive}</span>`;
-//                 break;
-//         }
-//     }
-//     return relation;
-// }
 export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
     let positive = "";
     let negative = "";
 
     switch (type) {
         case EnumQuestionType.Distinction:
-            positive = "same as";
-            negative = "opposite of";
+            positive = randomFrom(expressionVariants.Distinction.positive);
+            negative = randomFrom(expressionVariants.Distinction.negative);
             break;
         case EnumQuestionType.ComparisonNumerical:
-            positive = "more than";
-            negative = "less than";
+            positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
+            negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
             break;
         case EnumQuestionType.ComparisonChronological:
-            positive = "after";
-            negative = "before";
+            positive = randomFrom(expressionVariants.ComparisonChronological.positive);
+            negative = randomFrom(expressionVariants.ComparisonChronological.negative);
             break;
     }
 
@@ -258,6 +227,7 @@ export function getRelation(settings: Settings, type: EnumQuestionType, isPositi
     }
     return relation;
 }
+
 export function createMetaRelationships(settings: Settings, question: Question, length: number) {
     // Substitute a variable number of premises with meta-relations
     if (settings.enabled.meta && coinFlip()) {
@@ -377,13 +347,7 @@ export function horizontalShuffleArrangement(premises: IArrangementPremise[]) {
     });
 }
 
-export function getLinearWays(
-    i: number,
-    j: number,
-    _: number,
-    forConclusion = false,
-    precise = false
-) {
+export function getLinearWays(i: number, j: number, numOfEls: number, forConclusion = false) {
     const isAdjLeft = i + 1 === j;
     const isAdjRight = i - 1 === j;
     const isNext = isAdjLeft || isAdjRight;
@@ -415,28 +379,20 @@ export function getLinearWays(
             possible: isNext,
             steps
         };
-        if (!precise) {
-            ways[EnumArrangements.Left] = {
-                possible: isLeft,
-                steps: -Infinity
-            };
-            ways[EnumArrangements.Right] = {
-                possible: isRight,
-                steps: -Infinity
-            };
-        }
+        ways[EnumArrangements.Left] = {
+            possible: isLeft,
+            steps: -Infinity
+        };
+        ways[EnumArrangements.Right] = {
+            possible: isRight,
+            steps: -Infinity
+        };
     }
 
     return ways;
 };
 
-export function getCircularWays(
-    i: number,
-    j: number,
-    numOfEls: number,
-    forConclusion = false,
-    precise = false
-) {
+export function getCircularWays(i: number, j: number, numOfEls: number, forConclusion = false) {
     const getAdjLeft = (i: number) => (numOfEls + (i + 1)) % numOfEls;
     const getAdjRight = (i: number) => (numOfEls + (i - 1)) % numOfEls;
     const getInFront = (i: number) => (i + (numOfEls / 2)) % numOfEls;
@@ -486,16 +442,14 @@ export function getCircularWays(
             possible: isNext,
             steps
         };
-        if (!precise) {
-            ways[EnumArrangements.Left] = {
-                possible: isLeft,
-                steps: -Infinity
-            };
-            ways[EnumArrangements.Right] = {
-                possible: isRight,
-                steps: -Infinity
-            };
-        }
+        ways[EnumArrangements.Left] = {
+            possible: isLeft,
+            steps: -Infinity
+        };
+        ways[EnumArrangements.Right] = {
+            possible: isRight,
+            steps: -Infinity
+        };
     }
 
     return ways;

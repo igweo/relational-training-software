@@ -6,6 +6,7 @@ import { LS_CUSTOM_TIMERS_KEY } from '../settings/modal-timer-settings/modal-tim
 import { Router } from '@angular/router';
 import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
+import { SpeechService } from '../../services/speech.service';
 
 @Component({
     selector: 'app-game',
@@ -14,7 +15,7 @@ import { GameTimerService } from '../../services/game-timer.service';
 })
 export class GameComponent {
     Array = Array;
-    
+
     timerType;
     gameMode;
     timerTimeSeconds = 0;
@@ -25,6 +26,7 @@ export class GameComponent {
         public gameTimerService: GameTimerService,
         private statsService: StatsService,
         private router: Router,
+        private speechService: SpeechService
     ) {
         this.timerType = localStorage.getItem(LS_TIMER) || '0';
         this.gameMode = localStorage.getItem(LS_GAME_MODE) || '0';
@@ -36,14 +38,28 @@ export class GameComponent {
     }
 
     ngOnInit() {
-        switch(this.timerType) {
+        const questionPremises = this.sylSrv.question.premises;
+        const conclusion = this.sylSrv.question.conclusion;
+        const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion]
+        // Add voicelines to speech queue
+        // Wait for speech to be over lol
+        this.speechService.extractWordsWithNegation(
+            questionPremises
+                .concat(["Conclusion"])
+                .concat(conclusionFormatted)
+                .concat(["True or false?"])
+        ).forEach(
+            (voiceLine: string) => {
+                this.speechService.speak(voiceLine)
+            })
+        switch (this.timerType) {
             case '1': {
                 console.log("Custom timer");
 
                 const customTimers = JSON.parse(localStorage.getItem(LS_CUSTOM_TIMERS_KEY) || "{}");
                 this.timerTimeSeconds = customTimers[this.sylSrv.question.type] || 90;
                 this.kickTimer();
-                
+
                 break;
             }
             case '2': {
@@ -58,13 +74,13 @@ export class GameComponent {
                 this.timerTimeSeconds = 90;
 
                 const questionType = this.sylSrv.question.type;
-                const questionPremises = this.sylSrv.question.premises.length;
+                const questionPremisesCount = this.sylSrv.question.premises.length;
                 const { typeBasedStats } = this.statsService.calcStats(this.timerType);
                 const tbs = typeBasedStats[questionType];
 
                 if (tbs?.stats) {
-                    const prevStats = (tbs.stats as any)[questionPremises - 1];
-                    const currStats = (tbs.stats as any)[questionPremises];
+                    const prevStats = (tbs.stats as any)[questionPremisesCount - 1];
+                    const currStats = (tbs.stats as any)[questionPremisesCount];
 
                     let avgTimeToRespond = this.timerTimeSeconds;
                     if (currStats && currStats.count > 2) {
@@ -87,7 +103,7 @@ export class GameComponent {
                 }
 
                 this.kickTimer();
-                
+
                 break;
             }
             default: {

@@ -14,6 +14,8 @@ import { EnumArrangements, EnumQuestionType } from "../constants/question.consta
 import { EnumQuestionGroup, QUESTION_TYPE_SETTING_PARAMS } from "../constants/settings.constants";
 import { Logger } from "../utils/logger";
 import { GameTimerService } from "./game-timer.service";
+import { SpeechService } from "./speech.service"
+import { forEach, forEachRight } from "lodash";
 
 @Injectable({
     providedIn: "root"
@@ -62,6 +64,7 @@ export class SyllogimousService {
         private router: Router,
         private progressAndPerformanceService: ProgressAndPerformanceService,
         private gameTimerService: GameTimerService,
+        private speechService: SpeechService
     ) {
         this.loadScore();
         (window as any).syllogimous = this;
@@ -73,15 +76,8 @@ export class SyllogimousService {
     }
 
     loadScore() {
-        const lsScore = localStorage.getItem(LS_SCORE);
-        if (lsScore) {
-            this.score = JSON.parse(lsScore);
-        }
-    }
-
-    pushIntoHistory(question: Question) {
-        localStorage.setItem(LS_HISTORY, JSON.stringify([question, ...this.questions]));
-    }
+        const lsScore = localStorage.getItem(LS_SCORE); if (lsScore) { this.score = JSON.parse(lsScore); }
+    } pushIntoHistory(question: Question) { localStorage.setItem(LS_HISTORY, JSON.stringify([question, ...this.questions])); }
 
     /** Given an EnumTiers value construct a Settings instance */
     getSettingsFromTier(tier: EnumTiers) {
@@ -90,6 +86,8 @@ export class SyllogimousService {
 
         settings.setEnable("negation", false);
         settings.setEnable("meta", false);
+        settings.setEnable("meaningfulWords", true);
+        settings.setEnable("audioMode", true);
 
         for (let i = 0; i < TIERS_MATRIX[tierIdx].length; i++) {
             const questionType = ORDERED_QUESTION_TYPES[i];
@@ -98,18 +96,27 @@ export class SyllogimousService {
             settings.setQuestionSettings(questionType, isActive, numOfPremises);
         }
 
-        if (tierIdx > 5) {
-            settings.setEnable("negation", true);
-        }
-
-        if (tierIdx > 6) {
-            settings.setEnable("meta", true);
-        }
-
         return settings;
     }
 
     /** Given question type and number of premises, returns a question creator function */
+    // getCreateFn(questionType: EnumQuestionType, numOfPremises: number) {
+    //     return {
+    //         [EnumQuestionType.Distinction]: () => this.createDistinction(numOfPremises),
+    //         [EnumQuestionType.ComparisonNumerical]: () => this.createComparison(numOfPremises, EnumQuestionType.ComparisonNumerical),
+    //         [EnumQuestionType.ComparisonChronological]: () => this.createComparison(numOfPremises, EnumQuestionType.ComparisonChronological),
+    //         [EnumQuestionType.Syllogism]: () => this.createSyllogism(numOfPremises),
+    //         [EnumQuestionType.LinearArrangement]: () => this.createArrangement(numOfPremises, EnumQuestionType.LinearArrangement),
+    //         [EnumQuestionType.CircularArrangement]: () => this.createArrangement(numOfPremises, EnumQuestionType.CircularArrangement),
+    //         [EnumQuestionType.Direction]: () => this.createDirection(numOfPremises),
+    //         [EnumQuestionType.Direction3DSpatial]: () => this.createDirection3D(numOfPremises, EnumQuestionType.Direction3DSpatial),
+    //         [EnumQuestionType.Direction3DTemporal]: () => this.createDirection3D(numOfPremises, EnumQuestionType.Direction3DTemporal),
+    //         [EnumQuestionType.GraphMatching]: () => this.createGraphMatching(numOfPremises),
+    //         [EnumQuestionType.Analogy]: () => this.createAnalogy(numOfPremises),
+    //         [EnumQuestionType.Binary]: () => this.createBinary(numOfPremises),
+    //     }[questionType];
+    // }
+
     getCreateFn(questionType: EnumQuestionType, numOfPremises: number) {
         return {
             [EnumQuestionType.Distinction]: () => this.createDistinction(numOfPremises),
@@ -123,9 +130,12 @@ export class SyllogimousService {
             [EnumQuestionType.Direction3DTemporal]: () => this.createDirection3D(numOfPremises, EnumQuestionType.Direction3DTemporal),
             [EnumQuestionType.GraphMatching]: () => this.createGraphMatching(numOfPremises),
             [EnumQuestionType.Analogy]: () => this.createAnalogy(numOfPremises),
+
             [EnumQuestionType.Binary]: () => this.createBinary(numOfPremises),
         }[questionType];
+
     }
+
 
     /** Return a random question based on the current settings */
     createRandomQuestion(numOfPremises?: number, basic?: boolean) {

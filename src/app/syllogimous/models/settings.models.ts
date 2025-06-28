@@ -134,7 +134,7 @@ export class Settings {
         );
     }
 
-    setEnable(prop: "meaningfulWords"|"meta"|"negation", value: boolean) {
+    setEnable(prop: "meaningfulWords"|"meta"|"negation"|"audioMode", value: boolean) {
         this.enabled[prop] = value;
         return this;
     }

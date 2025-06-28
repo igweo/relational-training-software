@@ -1,5 +1,6 @@
 import { EnumQuestionType } from "./question.constants";
-
+// TODO: Add an audio only mode
+// TODO: Add simple arithmetic mode
 export enum EnumQuestionGroup {
     Comparison = "Comparison",
     Direction = "Direction",
@@ -99,7 +100,8 @@ export const QUESTION_TYPE_SETTING_PARAMS: Record<EnumQuestionType, ISettingPara
 export const DEFAULT_ENABLED_FLAGS = {
     meaningfulWords: true,
     meta: true,
-    negation: true,
+    negation: false,
+    audioMode: true,
     binary: {
         and: true,
         nand: true,
