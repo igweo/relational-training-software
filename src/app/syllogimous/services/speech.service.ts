@@ -14,7 +14,7 @@ export class SpeechService {
 
         var utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 2;
+        utterance.rate = 1.25;
 
         this.synth.speak(utterance);
     }
