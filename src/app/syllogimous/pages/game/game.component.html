@@ -23,6 +23,57 @@
             </ngb-progressbar>
         </div>
 
+        <div [class.d-none]="gameMode !== '1'">
+            <ngb-carousel
+                #carousel
+                [interval]="999999999"
+                [showNavigationArrows]="false"
+                [showNavigationIndicators]="false"
+                style="border: 0; box-shadow: none;"
+            >
+                <ng-template ngbSlide *ngIf="sylSrv.question.instructions?.length || sylSrv.question.notes?.length">
+                    <div style="display: grid; place-items: center;">
+                        <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
+                    </div>
+                </ng-template>
+
+                <ng-template ngbSlide *ngFor="let p of sylSrv.question.premises; let i = index; let last = last;">
+                    <div style="display: grid; place-items: center;">
+                        <div>
+                            <small class="text-muted">{{last ? "Last premise" : "Premise " + (i + 1)}}</small>
+                            <div [innerHTML]="p"></div>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <ng-container *ngIf="Array.isArray(sylSrv.question.conclusion); else conclusionsIsStringCarouselTemplate">
+                    <ng-template ngbSlide *ngFor="let c of sylSrv.question.conclusion; let i = index; let last = last;">
+                        <div style="display: grid; place-items: center;">
+                            <div>
+                                <small class="text-muted">{{last ? "Last conclusion" : "Conclusion " + (i + 1)}}</small>
+                                <div [innerHTML]="c"></div>
+                            </div>
+                        </div>
+                    </ng-template>
+                </ng-container>
+                <ng-template #conclusionsIsStringCarouselTemplate>
+                    <ng-template ngbSlide>
+                        <div style="display: grid; place-items: center;">
+                            <div>
+                                <small class="text-muted">Conclusion</small>
+                                <div [innerHTML]="sylSrv.question.conclusion"></div>
+                            </div>
+                        </div>
+                    </ng-template>
+                </ng-template>
+            </ngb-carousel>
+    
+            <div class="flex-between p-3" style="position: absolute; left: 0; bottom: 0; width: 100%;">
+                <button class="btn border-0" style="box-shadow: none;" (click)="carousel.prev()"><i class="bi bi-arrow-left"></i> Prev</button>
+                <button class="btn border-0" style="box-shadow: none;" (click)="carousel.next()">Next <i class="bi bi-arrow-right"></i></button>
+            </div>
+        </div>
+        
         <div class="d-grid gap-4" [class.d-none]="gameMode === '1'">
             <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
 
