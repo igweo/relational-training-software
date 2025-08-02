@@ -102,6 +102,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     meta: true,
     negation: false,
     audioMode: true,
+    speechMode: false,
     binary: {
         and: true,
         nand: true,

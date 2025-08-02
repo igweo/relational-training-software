@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
+import { LS_SPEECH_MODE } from '../../constants/local-storage.constants';
 
 @Component({
     selector: 'app-game',
@@ -41,17 +42,21 @@ export class GameComponent {
         const questionPremises = this.sylSrv.question.premises;
         const conclusion = this.sylSrv.question.conclusion;
         const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion]
-        // Add voicelines to speech queue
-        // Wait for speech to be over lol
-        this.speechService.extractWordsWithNegation(
-            questionPremises
-                .concat(["Conclusion"])
-                .concat(conclusionFormatted)
-                .concat(["True or false?"])
-        ).forEach(
-            (voiceLine: string) => {
-                this.speechService.speak(voiceLine)
-            })
+        
+        // Check if speech mode is enabled before using text-to-speech
+        const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";
+        if (speechModeEnabled) {
+            // Add voicelines to speech queue
+            this.speechService.extractWordsWithNegation(
+                questionPremises
+                    .concat(["Conclusion"])
+                    .concat(conclusionFormatted)
+                    .concat(["True or false?"])
+            ).forEach(
+                (voiceLine: string) => {
+                    this.speechService.speak(voiceLine)
+                })
+        }
         switch (this.timerType) {
             case '1': {
                 console.log("Custom timer");

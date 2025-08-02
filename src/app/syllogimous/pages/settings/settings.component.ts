@@ -5,6 +5,7 @@ import { FormControl } from '@angular/forms';
 import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_UP_THRESHOLD, DEFAULT_TRAINING_UNIT_LENGTH, DEFAULT_WEEKLY_GOAL, ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
+import { LS_SPEECH_MODE } from '../../constants/local-storage.constants';
 
 @Component({
     selector: 'app-settings',
@@ -21,6 +22,8 @@ export class SettingsComponent {
     trainingUnitLength = new FormControl(DEFAULT_TRAINING_UNIT_LENGTH);
     premisesUpThreshold = new FormControl(DEFAULT_PREMISES_UP_THRESHOLD);
     premisesDownThreshold = new FormControl(DEFAULT_PREMISES_DOWN_THRESHOLD);
+
+    speechMode = new FormControl(false);
 
     constructor(
         public router: Router,
@@ -52,6 +55,12 @@ export class SettingsComponent {
         this.premisesDownThreshold.setValue(premisesDownThreshold);
         this.premisesDownThreshold.valueChanges
             .subscribe(v => localStorage.setItem(LS_PREMISES_DOWN_THRESHOLD, String(v)));
+
+        // Speech mode
+        const speechModeStored = localStorage.getItem(LS_SPEECH_MODE);
+        this.speechMode.setValue(speechModeStored === null ? false : speechModeStored === "true");
+        this.speechMode.valueChanges
+            .subscribe(v => localStorage.setItem(LS_SPEECH_MODE, String(v)));
     }
 
 }

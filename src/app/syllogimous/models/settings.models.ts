@@ -103,7 +103,7 @@ export class QuestionSettings {
 
 export class Settings {
     question!: Record<EnumQuestionType, QuestionSettings>;
-    enabled: typeof DEFAULT_ENABLED_FLAGS;
+    enabled: typeof DEFAULT_ENABLED_FLAGS & { speechMode: boolean };
 
     private configSettings?: Settings;
 
