@@ -7,7 +7,8 @@ import { Router } from '@angular/router';
 import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
-import { LS_SPEECH_MODE } from '../../constants/local-storage.constants';
+import { VisualService } from '../../services/visual.service';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE } from '../../constants/local-storage.constants';
 
 @Component({
     selector: 'app-game',
@@ -21,13 +22,15 @@ export class GameComponent {
     gameMode;
     timerTimeSeconds = 0;
     trueButtonToTheRight = false;
+    selectedOption: string | null = null;
 
     constructor(
         public sylSrv: SyllogimousService,
         public gameTimerService: GameTimerService,
         private statsService: StatsService,
         private router: Router,
-        private speechService: SpeechService
+        private speechService: SpeechService,
+        private visualService: VisualService
     ) {
         this.timerType = localStorage.getItem(LS_TIMER) || '0';
         this.gameMode = localStorage.getItem(LS_GAME_MODE) || '0';
@@ -39,9 +42,42 @@ export class GameComponent {
     }
 
     ngOnInit() {
-        const questionPremises = this.sylSrv.question.premises;
-        const conclusion = this.sylSrv.question.conclusion;
-        const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion]
+        let questionPremises = this.sylSrv.question.premises;
+        let conclusion = this.sylSrv.question.conclusion;
+        const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion];
+        
+        // Check if visual mode is enabled and transform content
+        const visualModeEnabled = localStorage.getItem(LS_VISUAL_MODE) === "true";
+        if (visualModeEnabled) {
+            // Transform premises to visual symbols
+            questionPremises = questionPremises.map(premise => 
+                this.visualService.transformToVisual(premise)
+            );
+            
+            // Transform conclusion(s) to visual symbols
+            if (Array.isArray(conclusion)) {
+                conclusion = conclusion.map(c => this.visualService.transformToVisual(c));
+            } else {
+                conclusion = this.visualService.transformToVisual(conclusion);
+            }
+            
+            // Update the service with transformed content
+            this.sylSrv.question.premises = questionPremises;
+            this.sylSrv.question.conclusion = conclusion;
+            
+            // Transform instructions and notes if they exist
+            if (this.sylSrv.question.instructions) {
+                this.sylSrv.question.instructions = this.sylSrv.question.instructions.map(instruction =>
+                    this.visualService.transformToVisual(instruction)
+                );
+            }
+            
+            if (this.sylSrv.question.notes) {
+                this.sylSrv.question.notes = this.sylSrv.question.notes.map(note =>
+                    this.visualService.transformToVisual(note)
+                );
+            }
+        }
         
         // Check if speech mode is enabled before using text-to-speech
         const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";
@@ -119,6 +155,16 @@ export class GameComponent {
 
     ngOnDestroy() {
         this.gameTimerService.stop();
+    }
+
+    selectOption(option: string) {
+        this.selectedOption = option;
+        
+        // For Matrix Reasoning questions, check if the selected option is correct
+        if (this.sylSrv.question.type === 'Matrix Reasoning') {
+            const isCorrect = option === this.sylSrv.question.correctAnswer;
+            this.sylSrv.checkQuestion(isCorrect);
+        }
     }
 
     kickTimer = async () => {

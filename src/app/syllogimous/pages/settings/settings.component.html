@@ -86,6 +86,45 @@
         </div>
 
         <div class="card shadow-sm">
+            <div class="card-header py-2 small">Question Types</div>
+            <div class="card-body">
+                <div class="d-grid" style="gap: 1rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Question Type Selection</span>
+                        <button 
+                            class="btn btn-sm btn-outline-primary"
+                            (click)="setMatrixReasoningOnly()"
+                            title="Enable only Matrix Reasoning questions"
+                        >
+                            Matrix Reasoning Only
+                        </button>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6" *ngFor="let questionType of getQuestionTypes()">
+                            <div class="form-check">
+                                <input 
+                                    class="form-check-input" 
+                                    type="checkbox" 
+                                    [id]="'question-' + questionType"
+                                    [checked]="isQuestionTypeEnabled(questionType)"
+                                    (change)="toggleQuestionType(questionType, $event)"
+                                >
+                                <label class="form-check-label" [for]="'question-' + questionType">
+                                    {{ questionType }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning small mb-0" *ngIf="getValidationError()">
+                        {{ getValidationError() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
             <div class="card-header py-2 small">Speech settings</div>
             <div class="card-body">
                 <div class="form-check">
@@ -98,6 +137,26 @@
                     <label class="form-check-label" for="speechMode">
                         Enable speech mode (text-to-speech)
                     </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header py-2 small">Visual settings</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="visualMode"
+                        [formControl]="visualMode"
+                    >
+                    <label class="form-check-label" for="visualMode">
+                        Enable visual mode (replace words with symbols)
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">
+                    Transforms text into visuospatial symbols: 🔴🟠🟡🟢🔵 ⬛⬜🟥🟦 🔺🔻🔶🔷
                 </div>
             </div>
         </div>

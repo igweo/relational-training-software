@@ -132,8 +132,201 @@ export class SyllogimousService {
             [EnumQuestionType.Analogy]: () => this.createAnalogy(numOfPremises),
 
             [EnumQuestionType.Binary]: () => this.createBinary(numOfPremises),
+            [EnumQuestionType.MatrixReasoning]: () => this.createMatrixReasoning(numOfPremises),
         }[questionType];
 
+    }
+
+    createMatrixReasoning(numOfPremises: number): Question {
+        this.logger.info("createMatrixReasoning");
+
+        const type = EnumQuestionType.MatrixReasoning;
+        const settings = this.settings;
+
+        if (!canGenerateQuestion(type, numOfPremises, settings)) {
+            throw new Error("Cannot generate.");
+        }
+
+        const matrixSize = 3;
+        const question = new Question(type);
+
+        // Choose pattern type based on available logical frameworks
+        const patternTypes = [
+            'distinction-comparison',
+            'shape-size',
+            'direction-rotation',
+            'sequence-progression'
+        ];
+        const patternType = pickUniqueItems(patternTypes, 1).picked[0];
+
+        let matrix: string[][] = [];
+        let missingAnswer = '';
+
+        switch (patternType) {
+            case 'distinction-comparison':
+                ({ matrix, missingAnswer } = this.createDistinctionComparisonMatrix());
+                break;
+            case 'shape-size':
+                ({ matrix, missingAnswer } = this.createShapeSizeMatrix());
+                break;
+            case 'direction-rotation':
+                ({ matrix, missingAnswer } = this.createDirectionRotationMatrix());
+                break;
+            case 'sequence-progression':
+                ({ matrix, missingAnswer } = this.createSequenceProgressionMatrix());
+                break;
+        }
+
+        // Randomly select one cell to be missing
+        const missingRow = Math.floor(Math.random() * matrixSize);
+        const missingCol = Math.floor(Math.random() * matrixSize);
+        const correctAnswer = matrix[missingRow][missingCol];
+        matrix[missingRow][missingCol] = "?";
+
+        // Generate multiple choice options with intelligent distractors
+        const distractors = this.generateMatrixDistractors(matrix, correctAnswer, patternType);
+        const options = [correctAnswer, ...distractors];
+        shuffle(options);
+
+        question.matrix = matrix;
+        question.missingPosition = { row: missingRow, col: missingCol };
+        question.options = options;
+        question.correctAnswer = correctAnswer;
+        question.isValid = true;
+
+        question.instructions = [
+            "Analyze the pattern in both rows and columns.",
+            "Select the missing piece that satisfies both constraints."
+        ];
+
+        return question;
+    }
+
+    private createDistinctionComparisonMatrix(): { matrix: string[][], missingAnswer: string } {
+        // Row pattern: distinction (same/different relationships)
+        // Column pattern: comparison (size progression)
+        const shapes = ["○", "□", "△"];
+        const sizes = ["small", "medium", "large"];
+        const sizeSymbols = ["·", "●", "⬢"];
+
+        const matrix: string[][] = [];
+        
+        // Create 3x3 matrix where:
+        // Row 1: All same shape, different sizes
+        // Row 2: All different shapes, same sizes  
+        // Row 3: Pattern combination
+        for (let row = 0; row < 3; row++) {
+            const matrixRow: string[] = [];
+            for (let col = 0; col < 3; col++) {
+                if (row === 0) {
+                    // Row 1: Same shape (circle), increasing size
+                    matrixRow.push(sizeSymbols[col] === "·" ? "·" : sizeSymbols[col] === "●" ? "●" : "⬢");
+                } else if (row === 1) {
+                    // Row 2: Different shapes, medium size
+                    matrixRow.push(shapes[col]);
+                } else {
+                    // Row 3: Combines both patterns
+                    const shape = shapes[col];
+                    const size = col === 0 ? "·" : col === 1 ? "●" : "⬢";
+                    matrixRow.push(col === 0 ? "·" + shape : col === 1 ? "●" + shape : "⬢" + shape);
+                }
+            }
+            matrix.push(matrixRow);
+        }
+
+        return { matrix, missingAnswer: matrix[2][2] };
+    }
+
+    private createShapeSizeMatrix(): { matrix: string[][], missingAnswer: string } {
+        // Create matrix with shape and size progressions
+        const baseShapes = ["◯", "□", "△"];
+        const sizes = ["small", "medium", "large"];
+        const matrix: string[][] = [];
+
+        for (let row = 0; row < 3; row++) {
+            const matrixRow: string[] = [];
+            for (let col = 0; col < 3; col++) {
+                // Row pattern: shape progression
+                // Column pattern: size progression
+                const shapeIndex = row;
+                const sizeIndex = col;
+                
+                let symbol = baseShapes[shapeIndex];
+                if (sizeIndex === 0) symbol = symbol.replace(/[◯□△]/g, match => match === "◯" ? "·" : match === "□" ? "▫" : "▵");
+                if (sizeIndex === 2) symbol = symbol.replace(/[◯□△]/g, match => match === "◯" ? "⬢" : match === "□" ? "⬛" : "▲");
+                
+                matrixRow.push(symbol);
+            }
+            matrix.push(matrixRow);
+        }
+
+        return { matrix, missingAnswer: matrix[2][2] };
+    }
+
+    private createDirectionRotationMatrix(): { matrix: string[][], missingAnswer: string } {
+        // Use direction logic for spatial patterns
+        const arrows = ["↑", "→", "↓", "←"];
+        const matrix: string[][] = [];
+
+        for (let row = 0; row < 3; row++) {
+            const matrixRow: string[] = [];
+            for (let col = 0; col < 3; col++) {
+                // Row pattern: rotation by row
+                // Column pattern: rotation by column
+                const rotation = (row + col) % 4;
+                matrixRow.push(arrows[rotation]);
+            }
+            matrix.push(matrixRow);
+        }
+
+        return { matrix, missingAnswer: matrix[2][2] };
+    }
+
+    private createSequenceProgressionMatrix(): { matrix: string[][], missingAnswer: string } {
+        // Use comparison logic for sequence patterns
+        const numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        const matrix: string[][] = [];
+
+        const startValue = Math.floor(Math.random() * 3) + 1;
+        
+        for (let row = 0; row < 3; row++) {
+            const matrixRow: string[] = [];
+            for (let col = 0; col < 3; col++) {
+                // Each row increases by 1, each column increases by 3
+                const value = startValue + row + (col * 3);
+                matrixRow.push(value.toString());
+            }
+            matrix.push(matrixRow);
+        }
+
+        return { matrix, missingAnswer: matrix[2][2] };
+    }
+
+    private generateMatrixDistractors(matrix: string[][], correctAnswer: string, patternType: string): string[] {
+        const distractors: string[] = [];
+        
+        // Generate intelligent distractors based on pattern type
+        switch (patternType) {
+            case 'distinction-comparison':
+                distractors.push("●", "□", "·", "△", "⬢");
+                break;
+            case 'shape-size':
+                distractors.push("▫", "▵", "⬛", "▲", "·");
+                break;
+            case 'direction-rotation':
+                distractors.push("↑", "→", "↓", "←", "↗");
+                break;
+            case 'sequence-progression':
+                const num = parseInt(correctAnswer);
+                distractors.push((num + 1).toString(), (num - 1).toString(), (num + 2).toString(), (num - 2).toString());
+                break;
+        }
+
+        // Remove correct answer if it exists in distractors
+        const filteredDistractors = distractors.filter(d => d !== correctAnswer);
+        
+        // Return 5 distractors
+        return pickUniqueItems(filteredDistractors, Math.min(5, filteredDistractors.length)).picked;
     }
 
 

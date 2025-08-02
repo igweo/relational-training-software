@@ -1,4 +1,4 @@
-import { FORMS, NOUNS, NUMBER_WORDS, STRINGS, VALID_RULES } from "../constants/question.constants";
+import { FORMS, NOUNS, NUMBER_WORDS, STRINGS, VALID_RULES, NOT_STRINGS } from "../constants/question.constants";
 import { EnumArrangements, EnumQuestionType } from "../constants/question.constants";
 import { IArrangementPremise, IArrangementRelationship, Question } from "../models/question.models";
 import { Settings, Picked } from "../models/settings.models";
@@ -77,6 +77,9 @@ export function isPremiseLikeConclusion(premises: string[], conclusion: string) 
 }
 
 export function getSymbols(settings: Settings) {
+    if (settings.enabled.visualMode) {
+        return [...NOT_STRINGS];
+    }
     return settings.enabled.meaningfulWords ? [...NOUNS] : [...STRINGS];
 }
 

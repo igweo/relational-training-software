@@ -5,7 +5,9 @@ import { FormControl } from '@angular/forms';
 import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_UP_THRESHOLD, DEFAULT_TRAINING_UNIT_LENGTH, DEFAULT_WEEKLY_GOAL, ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
-import { LS_SPEECH_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE } from '../../constants/local-storage.constants';
+import { EnumQuestionType } from '../../constants/question.constants';
+import { areSettingsInvalid, Settings } from '../../models/settings.models';
 
 @Component({
     selector: 'app-settings',
@@ -24,6 +26,7 @@ export class SettingsComponent {
     premisesDownThreshold = new FormControl(DEFAULT_PREMISES_DOWN_THRESHOLD);
 
     speechMode = new FormControl(false);
+    visualMode = new FormControl(false);
 
     constructor(
         public router: Router,
@@ -61,6 +64,64 @@ export class SettingsComponent {
         this.speechMode.setValue(speechModeStored === null ? false : speechModeStored === "true");
         this.speechMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_SPEECH_MODE, String(v)));
+
+        // Visual mode
+        const visualModeStored = localStorage.getItem(LS_VISUAL_MODE);
+        this.visualMode.setValue(visualModeStored === null ? false : visualModeStored === "true");
+        this.visualMode.valueChanges
+            .subscribe(v => localStorage.setItem(LS_VISUAL_MODE, String(v)));
+    }
+
+    getQuestionTypes(): EnumQuestionType[] {
+        return Object.values(EnumQuestionType);
+    }
+
+    setMatrixReasoningOnly(): void {
+        // Create or update playground settings
+        if (!this.sylSrv.playgroundSettings) {
+            this.sylSrv.playgroundSettings = new Settings(this.sylSrv.settings);
+        }
+        
+        // Disable all question types first
+        Object.values(EnumQuestionType).forEach(questionType => {
+            this.sylSrv.playgroundSettings!.question[questionType].enabled = false;
+        });
+        
+        // Enable only Matrix Reasoning
+        this.sylSrv.playgroundSettings.question[EnumQuestionType.MatrixReasoning].enabled = true;
+    }
+
+    toggleQuestionType(questionType: EnumQuestionType, event: Event): void {
+        const target = event.target as HTMLInputElement;
+        
+        // Create or update playground settings
+        if (!this.sylSrv.playgroundSettings) {
+            this.sylSrv.playgroundSettings = new Settings(this.sylSrv.settings);
+        }
+        
+        this.sylSrv.playgroundSettings.question[questionType].enabled = target.checked;
+    }
+
+    getCurrentSettings(): Settings {
+        return this.sylSrv.playgroundSettings || this.sylSrv.settings;
+    }
+
+    isQuestionTypeEnabled(questionType: EnumQuestionType): boolean {
+        try {
+            return this.getCurrentSettings().question[questionType]?.enabled || false;
+        } catch (error) {
+            console.error('Error checking question type enabled status:', error);
+            return false;
+        }
+    }
+
+    getValidationError(): string | null {
+        try {
+            return areSettingsInvalid(this.getCurrentSettings());
+        } catch (error) {
+            console.error('Error validating settings:', error);
+            return null;
+        }
     }
 
 }

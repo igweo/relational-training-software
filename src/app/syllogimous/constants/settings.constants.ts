@@ -95,6 +95,12 @@ export const QUESTION_TYPE_SETTING_PARAMS: Record<EnumQuestionType, ISettingPara
         maxNumOfPremises: 20,
         basic: false
     },
+    [EnumQuestionType.MatrixReasoning]: {
+        enabled: true,
+        minNumOfPremises: 1,
+        maxNumOfPremises: 1,
+        basic: true
+    },
 }
 
 export const DEFAULT_ENABLED_FLAGS = {
@@ -103,6 +109,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     negation: false,
     audioMode: true,
     speechMode: false,
+    visualMode: false,
     binary: {
         and: true,
         nand: true,

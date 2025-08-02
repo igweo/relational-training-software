@@ -53,6 +53,12 @@ export class Question {
     graphPremises: [string, string, string][] = [];
     graphConclusion: [string, string, string][] = [];
 
+    // Matrix reasoning specific fields
+    matrix?: string[][];
+    missingPosition?: { row: number; col: number };
+    options?: string[];
+    correctAnswer?: string;
+
     constructor(type: EnumQuestionType) {
         this.type = type;
     }

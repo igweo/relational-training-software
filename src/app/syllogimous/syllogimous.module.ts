@@ -41,6 +41,7 @@ import { TiersMatrixComponent } from './pages/tiers-matrix/tiers-matrix.componen
 import { OtherGamesComponent } from './pages/other-games/other-games.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/graph-matching.component';
+import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
 
 const routes: Routes = [
     {
@@ -72,6 +73,7 @@ const routes: Routes = [
                     { path: EnumQuestionType.GraphMatching, component: TutorialGraphMatchingComponent },
                     { path: EnumQuestionType.Analogy, component: TutorialAnalogyComponent },
                     { path: EnumQuestionType.Binary, component: TutorialBinaryComponent },
+                    { path: EnumQuestionType.MatrixReasoning, component: TutorialMatrixReasoningComponent },
                 ]
             },
             { path: EnumScreens.TiersMatrix, component: TiersMatrixComponent },
@@ -105,6 +107,7 @@ const routes: Routes = [
         TutorialGraphMatchingComponent,
         TutorialAnalogyComponent,
         TutorialBinaryComponent,
+        TutorialMatrixReasoningComponent,
         StatsComponent,
         AccuracyStatsComponent,
         ErrorAnalysisComponent,

@@ -103,7 +103,7 @@ export class QuestionSettings {
 
 export class Settings {
     question!: Record<EnumQuestionType, QuestionSettings>;
-    enabled: typeof DEFAULT_ENABLED_FLAGS & { speechMode: boolean };
+    enabled: typeof DEFAULT_ENABLED_FLAGS & { speechMode: boolean; visualMode: boolean };
 
     private configSettings?: Settings;
 
@@ -122,6 +122,7 @@ export class Settings {
         this.initQuestionSettings(EnumQuestionType.GraphMatching);
         this.initQuestionSettings(EnumQuestionType.Analogy);
         this.initQuestionSettings(EnumQuestionType.Binary);
+        this.initQuestionSettings(EnumQuestionType.MatrixReasoning);
     }
 
     initQuestionSettings(type: EnumQuestionType) {
