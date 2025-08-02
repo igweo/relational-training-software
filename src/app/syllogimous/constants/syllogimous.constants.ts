@@ -24,7 +24,7 @@ export enum EnumTiers {
     Expert = "115 IQ",
     Mastermind = "120 IQ",
     Visionary = "125 IQ",
-    Genius = "130 IQ (Superior)",
+    Genius = "130 IQ",
     Virtuoso = "135 IQ",
     Luminary = "140 IQ",
     Prodigy = "145 IQ",

@@ -96,7 +96,7 @@ export const QUESTION_TYPE_SETTING_PARAMS: Record<EnumQuestionType, ISettingPara
         basic: false
     },
     [EnumQuestionType.MatrixReasoning]: {
-        enabled: true,
+        enabled: false,
         minNumOfPremises: 1,
         maxNumOfPremises: 1,
         basic: true
