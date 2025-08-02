@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Question } from "../models/question.models";
-import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic } from "../utils/question.utils";
+import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
 import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER } from "../constants/local-storage.constants";
@@ -346,69 +346,74 @@ export class SyllogimousService {
         return question;
     }
 
-    createDistinction(numOfPremises: number): Question {
-        this.logger.info("createDistinction");
+        createDistinction(numOfPremises: number): Question {
+            this.logger.info("createDistinction");
 
-        const type = EnumQuestionType.Distinction;
-        const settings = this.settings;
+            const type = EnumQuestionType.Distinction;
+            const settings = this.settings;
 
-        if (!canGenerateQuestion(type, numOfPremises, settings)) {
-            throw new Error("Cannot generate.");
-        }
+            if (!canGenerateQuestion(type, numOfPremises, settings)) {
+                throw new Error("Cannot generate.");
+            }
 
-        const length = numOfPremises + 1;
-        const symbols = getRandomSymbols(settings, length);
-        const question = new Question(type);
+            const length = numOfPremises + 1;
+            const symbols = getRandomSymbols(settings, length);
+            const question = new Question(type);
 
-        do {
-            const rnd = Math.floor(Math.random() * symbols.length);
-            const first = symbols.splice(rnd, 1)
-            let prev = first;
-            let curr: string[] = [];
-
-            question.buckets = [[prev], []];
-            let prevBucket = 0;
-
-            question.premises = [];
-
-            for (let i = 0; i < length - 1; i++) {
+            do {
                 const rnd = Math.floor(Math.random() * symbols.length);
-                curr = symbols.splice(rnd, 1);
+                const first = symbols.splice(rnd, 1);
+                let prev = first[0];
+                let curr = "";
 
-                const isSameAs = coinFlip();
-                const relation = getRelation(settings, type, isSameAs);
+                question.buckets = [[prev], []];
+                let prevBucket = 0;
 
-                question.premises.push(`<span class="subject">${prev}</span> is ${relation} <span class="subject">${curr}</span>`);
+                question.premises = [];
 
-                if (!isSameAs) {
-                    prevBucket = (prevBucket + 1) % 2;
+                for (let i = 0; i < length - 1; i++) {
+                    const rnd = Math.floor(Math.random() * symbols.length);
+                    const currArr = symbols.splice(rnd, 1);
+                    curr = currArr[0];
+
+                    const isSameAs = coinFlip();
+                    const relation = getRelation(settings, type, isSameAs);
+
+                    question.premises.push(`<span class="subject">${prev}</span> is ${relation} <span class="subject">${curr}</span>`);
+
+                    if (!isSameAs) {
+                        prevBucket = (prevBucket + 1) % 2;
+                    }
+
+                    question.buckets[prevBucket].push(curr);
+
+                    prev = curr;
                 }
 
-                question.buckets[prevBucket].push(curr);
+                // All same is useless, in that case repeat
+                if (!question.buckets[0].length || !question.buckets[1].length) {
+                    return this.createDistinction(numOfPremises);
+                }
 
-                prev = curr;
-            }
+                createMetaRelationships(settings, question, length);
 
-            // All same is useless, in that case repeat
-            if (!question.buckets[0].length || !question.buckets[1].length) {
-                return this.createDistinction(numOfPremises);
-            }
+                // Use diversified conclusion generation
+                const allElements = [...question.buckets[0], ...question.buckets[1]].flat();
+                const diversifiedConclusion = diversifyDistinctionConclusion(
+                    settings, 
+                    type, 
+                    question.buckets, 
+                    allElements
+                );
+                
+                question.conclusion = diversifiedConclusion.conclusion;
+                question.isValid = diversifiedConclusion.isValid;
+            } while (isPremiseLikeConclusion(question.premises, question.conclusion));
 
-            createMetaRelationships(settings, question, length);
+            shuffle(question.premises);
 
-            const isSameAs = coinFlip();
-            const relation = getRelation(settings, type, isSameAs);
-
-            question.conclusion = `<span class="subject">${first}</span> is ${relation} <span class="subject">${curr}</span>`;
-            question.isValid = isSameAs
-                ? question.buckets[0].includes(curr)
-                : question.buckets[1].includes(curr);
-        } while (isPremiseLikeConclusion(question.premises, question.conclusion));
-
-        shuffle(question.premises);
-
-        return question;
-    }
+            return question;
+        }
 
     createComparison(numOfPremises: number, type: EnumQuestionType.ComparisonNumerical | EnumQuestionType.ComparisonChronological) {
         this.logger.info("createComparison:", type);
@@ -442,19 +447,16 @@ export class SyllogimousService {
 
             createMetaRelationships(settings, question, length);
 
-            const a = Math.floor(Math.random() * question.bucket.length);
-            let b = Math.floor(Math.random() * question.bucket.length);
-            while (a === b) {
-                b = Math.floor(Math.random() * question.bucket.length);
-            }
-
-            const isMoreOrAfter = coinFlip();
-            const relation = getRelation(settings, type, isMoreOrAfter);
-
-            question.conclusion = `<span class="subject">${question.bucket[a]}</span> is ${relation} <span class="subject">${question.bucket[b]}</span>`;
-            question.isValid = isMoreOrAfter
-                ? sign === 1 && a > b || sign === -1 && a < b
-                : sign === 1 && a < b || sign === -1 && a > b;
+            // Use diversified conclusion generation
+            const diversifiedConclusion = diversifyComparisonConclusion(
+                settings,
+                type,
+                question.bucket,
+                sign
+            );
+            
+            question.conclusion = diversifiedConclusion.conclusion;
+            question.isValid = diversifiedConclusion.isValid;
         } while (isPremiseLikeConclusion(question.premises, question.conclusion));
 
         shuffle(question.premises);

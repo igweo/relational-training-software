@@ -18,21 +18,21 @@ export enum EnumScreens {
 }
 
 export enum EnumTiers {
-    Adept = "Adept",
-    Scholar = "Scholar",
-    Savant = "Savant",
-    Expert = "Expert",
-    Mastermind = "Mastermind",
-    Visionary = "Visionary",
-    Genius = "Genius",
-    Virtuoso = "Virtuoso",
-    Luminary = "Luminary",
-    Prodigy = "Prodigy",
+    Adept = "90 IQ",
+    Scholar = "100 IQ",
+    Savant = "110 IQ",
+    Expert = "115 IQ",
+    Mastermind = "120 IQ",
+    Visionary = "125 IQ",
+    Genius = "130 IQ (Superior)",
+    Virtuoso = "135 IQ",
+    Luminary = "140 IQ",
+    Prodigy = "145 IQ",
     Oracle = "Oracle",
     Sage = "Sage",
     Philosopher = "Philosopher",
     Mystic = "Mystic",
-    Transcendent = "Von Neumann",
+    Transcendent = "Transcendent",
 }
 
 export const TIER_COLORS: Record<EnumTiers, { bgColor: string, textColor: string }> = {

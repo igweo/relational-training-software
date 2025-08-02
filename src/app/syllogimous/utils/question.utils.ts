@@ -3,6 +3,17 @@ import { EnumArrangements, EnumQuestionType } from "../constants/question.consta
 import { IArrangementPremise, IArrangementRelationship, Question } from "../models/question.models";
 import { Settings, Picked } from "../models/settings.models";
 
+// Conclusion diversification strategies to prevent pattern memorization
+export enum ConclusionDiversificationStrategy {
+    ENDPOINT_TRADITIONAL = "endpoint_traditional",     // Current behavior - test endpoints
+    INTERMEDIATE_CHAIN = "intermediate_chain",         // Test middle elements in chain
+    REVERSE_DIRECTION = "reverse_direction",           // Test same relationship in reverse
+    MULTI_HOP_SKIP = "multi_hop_skip",                // Skip elements in chain testing
+    PREMISE_RESTATEMENT = "premise_restatement",       // Test relationships explicitly stated
+    ADJACENT_PAIRS = "adjacent_pairs",                 // Test adjacent elements in sequence
+    RANDOM_PAIR = "random_pair"                        // Test completely random valid pair
+}
+
 export const b2n = (b: boolean) => +b as number;
 
 export function genBinKey(booleans: boolean[]) {
@@ -138,110 +149,422 @@ export function getMetaReplacer(settings: Settings, choosenPair: Picked<string>,
 }
 const expressionVariants = {
     Distinction: {
-        /* “Same / not-same” */
+        /* "Same / not-same" - Identity and equivalence relationships */
         positive: [
-            "=", "==",  "≈",              // mathematical / programming
-            "equivalent to", "coincident", "congruent to",
-            "on par with", "the same as",
-            "proportional to", "equal to", "identical to",  "not not"
+            "equivalent to", "identical to", "congruent to", "the same as", "equal to",
+            "tantamount to", "analogous to", "correspondent to", "commensurate with",
+            "coincident with", "coextensive with", "synonymous with", "interchangeable with",
+            "indistinguishable from", "on par with", "aligned with", "consistent with",
+            "homologous to", "isomorphic to", "parallel to", "correlative to",
+            "proportional to", "reciprocal to", "complementary to", "concomitant with"
         ],
         negative: [
-            // "≠", "¬", "!=", "<>","/=", "⁄=", "neq",      // math / programming
-            "opposite to", "distinct from", "dissimilar to",
-            "not equivalent to",
-            "divergent from",
-            "not equal to", "not", "not identical to", "nonidentical to"
+            "distinct from", "different from", "dissimilar to", "contrary to", "opposite to",
+            "divergent from", "disparate from", "incompatible with", "incongruent with",
+            "antithetical to", "contradictory to", "inverse to", "discordant with",
+            "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to",
+            "orthogonal to", "mutually exclusive with", "at variance with", "at odds with",
+            "not equivalent to", "not identical to", "not analogous to", "not correspondent to"
         ]
     },
 
     ComparisonNumerical: {
-        /* “Bigger / smaller” in quantity or magnitude */
+        /* "Greater / lesser" - Quantitative and magnitude relationships */
         positive: [
-            ">",                 // math symbols
-            "more than ", "greater than", "higher than",
-            "larger than", "bigger than", "above", "over",
-            "in excess of",
-            "beyond", "at least",
+            "greater than", "larger than", "higher than", "superior to", "above",
+            "in excess of", "beyond", "over", "exceeding", "surpassing",
+            "predominant over", "dominant over", "transcendent to", "paramount to",
+            "more substantial than", "more significant than", "more extensive than",
+            "more considerable than", "more pronounced than", "more abundant than",
+            "more voluminous than", "more capacious than", "more comprehensive than"
         ],
         negative: [
-            "<",                // math symbols
-             "less than", "fewer than", "smaller than",
-            "lower than", "below", "under", "beneath",
-            "underneath", "not exceeding", "no more than",
-            "inferior to",
-            "at most"
+            "less than", "smaller than", "lower than", "inferior to", "below",
+            "under", "beneath", "subordinate to", "secondary to", "minor to",
+            "subsidiary to", "subservient to", "diminished relative to", "reduced compared to",
+            "more limited than", "more restricted than", "more constrained than",
+            "more modest than", "more minimal than", "more negligible than",
+            "more marginal than", "more superficial than", "more cursory than"
         ]
     },
 
     ComparisonChronological: {
-        /* “Later / earlier” in time order */
+        /* "Later / earlier" - Temporal sequence relationships */
         positive: [
-            ">", "after", "later than", "post",
-            "posterior to", "subsequent", "following",
-            "ensuing", "then",
-            "beyond",
-            "in the wake of", " the successor of",
-            "in front of", "downstream", "chronologically greater"
+            "after", "later than", "subsequent to", "following", "posterior to",
+            "succeeding", "ensuing", "consequent to", "in the wake of", "downstream from",
+            "post", "beyond", "ahead of", "forward of", "advanced relative to",
+            "more recent than", "more contemporary than", "more modern than",
+            "more current than", "more up-to-date than", "more progressive than",
+            "chronologically superior to", "temporally advanced beyond"
         ],
         negative: [
-            "<", "before", "earlier", "prior to",
-            "the predecessor of", "ante", "anterior to",
-            "pre", "pre-", "in advance of", "ahead of",
-            "upstream", "past",
-            "chronologically less"
+            "before", "earlier than", "prior to", "preceding", "anterior to",
+            "antecedent to", "preliminary to", "preparatory to", "upstream from",
+            "pre", "ahead of", "in advance of", "preliminary to", "prefatory to",
+            "more ancient than", "more archaic than", "more primitive than",
+            "more antiquated than", "more obsolete than", "more outdated than",
+            "chronologically inferior to", "temporally behind"
+        ]
+    },
+
+    Direction: {
+        /* Spatial directional relationships */
+        positive: [
+            "north of", "northward from", "to the north of", "in a northerly direction from",
+            "above", "upward from", "higher than", "elevated relative to",
+            "superior in position to", "overhead relative to", "ascending from"
+        ],
+        negative: [
+            "south of", "southward from", "to the south of", "in a southerly direction from",
+            "below", "downward from", "lower than", "beneath", "under",
+            "inferior in position to", "underneath", "descending from"
+        ]
+    },
+
+    Direction3DSpatial: {
+        /* Three-dimensional spatial relationships */
+        positive: [
+            "above and forward of", "elevated and ahead of", "superior and anterior to",
+            "higher and in front of", "overhead and before", "ascending and preceding",
+            "upward and forward from", "vertically and horizontally advanced from"
+        ],
+        negative: [
+            "below and behind", "beneath and posterior to", "under and following",
+            "lower and after", "underneath and subsequent to", "descending and trailing",
+            "downward and backward from", "vertically and horizontally receding from"
+        ]
+    },
+
+    Direction3DTemporal: {
+        /* Temporal relationships in three-dimensional context */
+        positive: [
+            "chronologically and spatially advanced from", "temporally and positionally ahead of",
+            "later and higher than", "subsequent and superior to", "following and above",
+            "ensuing and elevated relative to", "posterior and ascending from"
+        ],
+        negative: [
+            "chronologically and spatially behind", "temporally and positionally below",
+            "earlier and lower than", "prior and inferior to", "preceding and beneath",
+            "antecedent and descending from", "anterior and declining relative to"
+        ]
+    },
+
+    GraphMatching: {
+        /* Network and connection relationships */
+        positive: [
+            "connected to", "linked with", "joined to", "associated with", "coupled to",
+            "bound to", "affiliated with", "related to", "corresponding to",
+            "networked with", "interfaced with", "bridged to", "tethered to",
+            "correlated with", "synchronized with", "coordinated with"
+        ],
+        negative: [
+            "disconnected from", "unlinked to", "separated from", "isolated from",
+            "detached from", "independent of", "unrelated to", "dissociated from",
+            "unaffiliated with", "uncoupled from", "autonomous relative to",
+            "discrete from", "uncoordinated with", "asynchronous with"
+        ]
+    },
+
+    Analogy: {
+        /* Relationship comparison expressions */
+        positive: [
+            "relates to", "corresponds to", "parallels", "mirrors the relationship of",
+            "exhibits the same pattern as", "demonstrates similarity to", "reflects",
+            "echoes the connection between", "replicates the association of",
+            "emulates the relationship between", "follows the same logic as"
+        ],
+        negative: [
+            "contrasts with", "differs from", "opposes the relationship of",
+            "contradicts the pattern of", "inverts the connection between",
+            "reverses the association of", "negates the relationship between",
+            "stands contrary to", "diverges from the logic of"
+        ]
+    },
+
+    Binary: {
+        /* Logical operation relationships */
+        positive: [
+            "affirms", "confirms", "validates", "verifies", "substantiates",
+            "corroborates", "establishes", "demonstrates", "proves",
+            "authenticates", "certifies", "endorses", "supports"
+        ],
+        negative: [
+            "negates", "refutes", "contradicts", "disproves", "invalidates",
+            "falsifies", "contravenes", "opposes", "disputes", "challenges",
+            "undermines", "discredits", "repudiates", "denies"
         ]
     }
 };
 const randomFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-// export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
-//     let positive = "";
-//     let negative = "";
+// Conclusion diversification helper functions
+export function selectDiversificationStrategy(questionType: EnumQuestionType, numElements: number): ConclusionDiversificationStrategy {
+    const availableStrategies: ConclusionDiversificationStrategy[] = [
+        ConclusionDiversificationStrategy.ENDPOINT_TRADITIONAL,
+        ConclusionDiversificationStrategy.RANDOM_PAIR
+    ];
 
-//     switch (type) {
-//         case EnumQuestionType.Distinction:
-//             positive = randomFrom(expressionVariants.Distinction.positive);
-//             negative = randomFrom(expressionVariants.Distinction.negative);
-//             break;
-//         case EnumQuestionType.ComparisonNumerical:
-//             positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
-//             negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
-//             break;
-//         case EnumQuestionType.ComparisonChronological:
-//             positive = randomFrom(expressionVariants.ComparisonChronological.positive);
-//             negative = randomFrom(expressionVariants.ComparisonChronological.negative);
-//             break;
-//     }
+    // Add strategies based on question type and complexity
+    if (numElements >= 3) {
+        availableStrategies.push(
+            ConclusionDiversificationStrategy.INTERMEDIATE_CHAIN,
+            ConclusionDiversificationStrategy.REVERSE_DIRECTION
+        );
+    }
 
-//     let relation = isPositive ? positive : negative;
-//     if (settings.enabled.negation && coinFlip()) {
-//         switch (relation) {
-//             case positive:
-//                 relation = `<span class="is-negated">${negative}</span>`;
-//                 break;
-//             case negative:
-//                 relation = `<span class="is-negated">${positive}</span>`;
-//                 break;
-//         }
-//     }
-//     return relation;
-// }
+    if (numElements >= 4) {
+        availableStrategies.push(
+            ConclusionDiversificationStrategy.MULTI_HOP_SKIP,
+            ConclusionDiversificationStrategy.ADJACENT_PAIRS
+        );
+    }
+
+    // Some strategies work better for certain question types
+    if (questionType === EnumQuestionType.Distinction || 
+        questionType === EnumQuestionType.ComparisonNumerical || 
+        questionType === EnumQuestionType.ComparisonChronological) {
+        availableStrategies.push(ConclusionDiversificationStrategy.PREMISE_RESTATEMENT);
+    }
+
+    return randomFrom(availableStrategies) as ConclusionDiversificationStrategy;
+}
+
+export function diversifyDistinctionConclusion(
+    settings: Settings, 
+    type: EnumQuestionType, 
+    buckets: string[][], 
+    allElements: string[],
+    strategy?: ConclusionDiversificationStrategy
+): { conclusion: string, isValid: boolean } {
+    const selectedStrategy = strategy || selectDiversificationStrategy(type, allElements.length);
+    
+    switch (selectedStrategy) {
+        case ConclusionDiversificationStrategy.INTERMEDIATE_CHAIN: {
+            // Test elements from middle of the chain instead of endpoints
+            const bucket0Middle = buckets[0].slice(1, -1);
+            const bucket1Middle = buckets[1].slice(1, -1);
+            
+            if (bucket0Middle.length > 0 && bucket1Middle.length > 0) {
+                const elem1 = randomFrom(bucket0Middle);
+                const elem2 = randomFrom(bucket1Middle);
+                const isSameAs = coinFlip();
+                const relation = getRelation(settings, type, isSameAs);
+                
+                return {
+                    conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                    isValid: !isSameAs // Different buckets, so "same" should be false
+                };
+            }
+            // Fallback to traditional if no middle elements
+            break;
+        }
+        
+        case ConclusionDiversificationStrategy.REVERSE_DIRECTION: {
+            // Test relationship in reverse order
+            const elem1 = randomFrom([...buckets[0], ...buckets[1]]);
+            const elem2 = randomFrom([...buckets[0], ...buckets[1]]);
+            
+            if (elem1 !== elem2) {
+                const isSameAs = coinFlip();
+                const relation = getRelation(settings, type, isSameAs);
+                const actualSame = (buckets[0].includes(elem1) && buckets[0].includes(elem2)) ||
+                                 (buckets[1].includes(elem1) && buckets[1].includes(elem2));
+                
+                return {
+                    conclusion: `<span class="subject">${elem2}</span> is ${relation} <span class="subject">${elem1}</span>`,
+                    isValid: isSameAs === actualSame
+                };
+            }
+            break;
+        }
+        
+        case ConclusionDiversificationStrategy.PREMISE_RESTATEMENT: {
+            // Sometimes test a relationship that's explicitly stated in premises
+            // This should always be TRUE
+            const bucket = coinFlip() ? buckets[0] : buckets[1];
+            if (bucket.length >= 2) {
+                const [elem1, elem2] = pickUniqueItems(bucket, 2).picked;
+                const relation = getRelation(settings, type, true); // Same bucket = same
+                
+                return {
+                    conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                    isValid: true
+                };
+            }
+            break;
+        }
+        
+        case ConclusionDiversificationStrategy.RANDOM_PAIR: {
+            // Test completely random pair
+            const [elem1, elem2] = pickUniqueItems(allElements, 2).picked;
+            const isSameAs = coinFlip();
+            const relation = getRelation(settings, type, isSameAs);
+            const actualSame = (buckets[0].includes(elem1) && buckets[0].includes(elem2)) ||
+                             (buckets[1].includes(elem1) && buckets[1].includes(elem2));
+            
+            return {
+                conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                isValid: isSameAs === actualSame
+            };
+        }
+    }
+    
+    // Fallback to traditional endpoint testing
+    const first = allElements[0];
+    const last = allElements[allElements.length - 1];
+    const isSameAs = coinFlip();
+    const relation = getRelation(settings, type, isSameAs);
+    const actualSame = (buckets[0].includes(first) && buckets[0].includes(last)) ||
+                      (buckets[1].includes(first) && buckets[1].includes(last));
+    
+    return {
+        conclusion: `<span class="subject">${first}</span> is ${relation} <span class="subject">${last}</span>`,
+        isValid: isSameAs === actualSame
+    };
+}
+
+export function diversifyComparisonConclusion(
+    settings: Settings,
+    type: EnumQuestionType,
+    orderedElements: string[],
+    sign: number,
+    strategy?: ConclusionDiversificationStrategy
+): { conclusion: string, isValid: boolean } {
+    const selectedStrategy = strategy || selectDiversificationStrategy(type, orderedElements.length);
+    
+    switch (selectedStrategy) {
+        case ConclusionDiversificationStrategy.ADJACENT_PAIRS: {
+            // Test adjacent elements in the sequence
+            if (orderedElements.length >= 2) {
+                const startIdx = Math.floor(Math.random() * (orderedElements.length - 1));
+                const elem1 = orderedElements[startIdx];
+                const elem2 = orderedElements[startIdx + 1];
+                
+                const isMoreOrAfter = coinFlip();
+                const relation = getRelation(settings, type, isMoreOrAfter);
+                
+                // For adjacent elements, the relationship depends on sign and order
+                const actualMore = sign === 1 ? startIdx < startIdx + 1 : startIdx > startIdx + 1;
+                
+                return {
+                    conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                    isValid: isMoreOrAfter === actualMore
+                };
+            }
+            break;
+        }
+        
+        case ConclusionDiversificationStrategy.MULTI_HOP_SKIP: {
+            // Skip elements in the chain (e.g., test A vs C instead of A vs B)
+            if (orderedElements.length >= 3) {
+                const skipDistance = 1 + Math.floor(Math.random() * Math.floor(orderedElements.length / 2));
+                const startIdx = Math.floor(Math.random() * (orderedElements.length - skipDistance));
+                const endIdx = startIdx + skipDistance;
+                
+                const elem1 = orderedElements[startIdx];
+                const elem2 = orderedElements[endIdx];
+                
+                const isMoreOrAfter = coinFlip();
+                const relation = getRelation(settings, type, isMoreOrAfter);
+                
+                const actualMore = sign === 1 ? startIdx < endIdx : startIdx > endIdx;
+                
+                return {
+                    conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                    isValid: isMoreOrAfter === actualMore
+                };
+            }
+            break;
+        }
+        
+        case ConclusionDiversificationStrategy.REVERSE_DIRECTION: {
+            // Test the relationship in reverse order
+            const a = Math.floor(Math.random() * orderedElements.length);
+            let b = Math.floor(Math.random() * orderedElements.length);
+            while (a === b) {
+                b = Math.floor(Math.random() * orderedElements.length);
+            }
+            
+            const isMoreOrAfter = coinFlip();
+            const relation = getRelation(settings, type, isMoreOrAfter);
+            
+            // Reverse the elements
+            const elem1 = orderedElements[b];
+            const elem2 = orderedElements[a];
+            
+            const actualMore = sign === 1 ? b > a : b < a;
+            
+            return {
+                conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                isValid: isMoreOrAfter === actualMore
+            };
+        }
+    }
+    
+    // Fallback to current random pair selection
+    const a = Math.floor(Math.random() * orderedElements.length);
+    let b = Math.floor(Math.random() * orderedElements.length);
+    while (a === b) {
+        b = Math.floor(Math.random() * orderedElements.length);
+    }
+    
+    const isMoreOrAfter = coinFlip();
+    const relation = getRelation(settings, type, isMoreOrAfter);
+    
+    return {
+        conclusion: `<span class="subject">${orderedElements[a]}</span> is ${relation} <span class="subject">${orderedElements[b]}</span>`,
+        isValid: isMoreOrAfter
+            ? sign === 1 && a > b || sign === -1 && a < b
+            : sign === 1 && a < b || sign === -1 && a > b
+    };
+}
+
 export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
     let positive = "";
     let negative = "";
 
     switch (type) {
         case EnumQuestionType.Distinction:
-            positive = "same as";
-            negative = "opposite of";
+            positive = randomFrom(expressionVariants.Distinction.positive);
+            negative = randomFrom(expressionVariants.Distinction.negative);
             break;
         case EnumQuestionType.ComparisonNumerical:
-            positive = "more than";
-            negative = "less than";
+            positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
+            negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
             break;
         case EnumQuestionType.ComparisonChronological:
-            positive = "after";
-            negative = "before";
+            positive = randomFrom(expressionVariants.ComparisonChronological.positive);
+            negative = randomFrom(expressionVariants.ComparisonChronological.negative);
+            break;
+        case EnumQuestionType.Direction:
+            positive = randomFrom(expressionVariants.Direction.positive);
+            negative = randomFrom(expressionVariants.Direction.negative);
+            break;
+        case EnumQuestionType.Direction3DSpatial:
+            positive = randomFrom(expressionVariants.Direction3DSpatial.positive);
+            negative = randomFrom(expressionVariants.Direction3DSpatial.negative);
+            break;
+        case EnumQuestionType.Direction3DTemporal:
+            positive = randomFrom(expressionVariants.Direction3DTemporal.positive);
+            negative = randomFrom(expressionVariants.Direction3DTemporal.negative);
+            break;
+        case EnumQuestionType.GraphMatching:
+            positive = randomFrom(expressionVariants.GraphMatching.positive);
+            negative = randomFrom(expressionVariants.GraphMatching.negative);
+            break;
+        case EnumQuestionType.Analogy:
+            positive = randomFrom(expressionVariants.Analogy.positive);
+            negative = randomFrom(expressionVariants.Analogy.negative);
+            break;
+        case EnumQuestionType.Binary:
+            positive = randomFrom(expressionVariants.Binary.positive);
+            negative = randomFrom(expressionVariants.Binary.negative);
+            break;
+        default:
+            // Fallback for any unhandled question types
+            positive = "related to";
+            negative = "unrelated to";
             break;
     }
 

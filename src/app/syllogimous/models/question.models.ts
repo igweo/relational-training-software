@@ -47,7 +47,7 @@ export class Question {
     // Technical fields
     rule = "";
     bucket: string[] = [];
-    buckets: string[][][] = [];
+    buckets: string[][] = [];
     coords: [string, number, number][] = [];
     coords3D: [string, number, number, number][] = [];
     graphPremises: [string, string, string][] = [];
