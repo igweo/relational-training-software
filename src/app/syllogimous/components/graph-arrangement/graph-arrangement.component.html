@@ -1,0 +1,71 @@
+<div class="graph-arrangement-container">
+  <div class="instructions">
+    <h4>Graph Arrangement</h4>
+    <p>Arrange the objects and connect them to represent the logical structure of the question:</p>
+    <ul>
+      <li><strong>Drag</strong> nodes to reposition them</li>
+      <li><strong>Connection Mode</strong>: Toggle connection mode, then click nodes to connect them</li>
+      <li><strong>Right-click</strong> on edges to remove them</li>
+      <li>Red arrows = directed relationships, Green lines = undirected relationships</li>
+    </ul>
+  </div>
+
+  <div class="canvas-container">
+    <canvas #canvas 
+            [width]="canvasWidth" 
+            [height]="canvasHeight"
+            class="graph-canvas">
+      Your browser does not support the HTML5 Canvas element.
+    </canvas>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-secondary me-2" (click)="resetGraph()">
+      <i class="bi bi-arrow-clockwise"></i> Reset
+    </button>
+    <button class="btn me-2" 
+            [class.btn-primary]="connectionMode" 
+            [class.btn-outline-primary]="!connectionMode"
+            (click)="toggleConnectionMode()">
+      <i class="bi bi-arrow-left-right"></i> 
+      {{ connectionMode ? 'Exit' : 'Enter' }} Connection Mode
+    </button>
+    <button class="btn btn-info me-2" (click)="addRandomEdges()" *ngIf="expectedEdges.length > 0">
+      <i class="bi bi-shuffle"></i> Add Sample Edges
+    </button>
+  </div>
+
+  <div class="status" *ngIf="nodes.length > 0">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="info-card">
+          <h6>Nodes ({{nodes.length}})</h6>
+          <div class="node-list">
+            <span class="badge bg-primary me-1 mb-1" *ngFor="let node of nodes">
+              {{node.label}}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="info-card">
+          <h6>Edges ({{edges.length}})</h6>
+          <div class="edge-list">
+            <div class="edge-item" *ngFor="let edge of edges">
+              <span class="badge" [ngClass]="edge.directed ? 'bg-danger' : 'bg-success'">
+                {{edge.from}} {{edge.directed ? '→' : '↔'}} {{edge.to}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="validation-status mt-3" *ngIf="edges.length > 0">
+    <div class="alert" [ngClass]="validateArrangement() ? 'alert-success' : 'alert-warning'">
+      <i class="bi" [ngClass]="validateArrangement() ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+      {{validateArrangement() ? 'Graph arrangement looks correct!' : 'Graph arrangement needs adjustment'}}
+    </div>
+  </div>
+</div>

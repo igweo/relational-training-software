@@ -151,153 +151,189 @@ export function getMetaReplacer(settings: Settings, choosenPair: Picked<string>,
     return `$1 ${relation} (<span class="subject">${a}</span> to <span class="subject">${b}</span>) to `;
 }
 const expressionVariants = {
-    Distinction: {
-        /* "Same / not-same" - Identity and equivalence relationships */
-        positive: [
-            "equivalent to", "identical to", "congruent to", "the same as", "equal to",
-            "tantamount to", "analogous to", "correspondent to", "commensurate with",
-            "coincident with", "coextensive with", "synonymous with", "interchangeable with",
-            "indistinguishable from", "on par with", "aligned with", "consistent with",
-            "homologous to", "isomorphic to", "parallel to", "correlative to",
-            "proportional to", "reciprocal to", "complementary to", "concomitant with"
-        ],
-        negative: [
-            "distinct from", "different from", "dissimilar to", "contrary to", "opposite to",
-            "divergent from", "disparate from", "incompatible with", "incongruent with",
-            "antithetical to", "contradictory to", "inverse to", "discordant with",
-            "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to",
-            "orthogonal to", "mutually exclusive with", "at variance with", "at odds with",
-            "not equivalent to", "not identical to", "not analogous to", "not correspondent to"
-        ]
-    },
+  Distinction: {
+      /* "Same / not‑same" – identity and equivalence relationships */
+      positive: [
+          "equivalent to", "identical to", "congruent to", "the same as", "equal to",
+          "tantamount to", "analogous to", "correspondent to", "commensurate with",
+          "coincident with", "coextensive with", "synonymous with", "interchangeable with",
+          "indistinguishable from", "on par with", "aligned with", "consistent with",
+          "homologous to", "isomorphic to", "parallel to", "correlative to",
+          "proportional to", "reciprocal to", "complementary to", "concomitant with",
+          /* fixed relative‑clause variants */
+          "identical to", "synonymous with", "interchangeable with"
+      ],
+      negative: [
+          "distinct from", "different from", "dissimilar to", "contrary to", "opposite to",
+          "divergent from", "disparate from", "incompatible with", "incongruent with",
+          "antithetical to", "contradictory to", "inverse to", "discordant with",
+          "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to",
+          "orthogonal to", "mutually exclusive with", "at variance with", "at odds with",
+          "not equivalent to", "not identical to", "not analogous to", "not correspondent to",
+          /* fixed relative‑clause variants */
+          "distinct from", "divergent from", "differentiated from"
+      ]
+  },
 
-    ComparisonNumerical: {
-        /* "Greater / lesser" - Quantitative and magnitude relationships */
-        positive: [
-            "greater than", "larger than", "higher than", "superior to", "above",
-            "in excess of", "beyond", "over", "exceeding", "surpassing",
-            "predominant over", "dominant over", "transcendent to", "paramount to",
-            "more substantial than", "more significant than", "more extensive than",
-            "more considerable than", "more pronounced than", "more abundant than",
-            "more voluminous than", "more capacious than", "more comprehensive than"
-        ],
-        negative: [
-            "less than", "smaller than", "lower than", "inferior to", "below",
-            "under", "beneath", "subordinate to", "secondary to", "minor to",
-            "subsidiary to", "subservient to", "diminished relative to", "reduced compared to",
-            "more limited than", "more restricted than", "more constrained than",
-            "more modest than", "more minimal than", "more negligible than",
-            "more marginal than", "more superficial than", "more cursory than"
-        ]
-    },
+  ComparisonNumerical: {
+      /* "Greater / lesser" – quantitative magnitude relationships */
+      positive: [
+          "greater than", "larger than", "higher than", "superior to", "above",
+          "in excess of", "beyond", "over", "exceeding", "surpassing",
+          "predominant over", "dominant over", "transcendent to", "paramount to",
+          "more substantial than", "more significant than", "more extensive than",
+          "more considerable than", "more pronounced than", "more abundant than",
+          "more voluminous than", "more capacious than", "more comprehensive than",
+          /* fixed relative‑clause variants */
+          "above", "higher than", "greater than"
+      ],
+      negative: [
+          "less than", "smaller than", "lower than", "inferior to", "below",
+          "under", "beneath", "subordinate to", "secondary to", "minor to",
+          "subsidiary to", "subservient to", "diminished relative to", "reduced compared to",
+          "more limited than", "more restricted than", "more constrained than",
+          "more modest than", "more minimal than", "more negligible than",
+          "more marginal than", "more superficial than", "more cursory than",
+          /* fixed relative‑clause variants */
+          "below", "lower than", "less than"
+      ]
+  },
 
-    ComparisonChronological: {
-        /* "Later / earlier" - Temporal sequence relationships */
-        positive: [
-            "after", "later than", "subsequent to", "following", "posterior to",
-            "succeeding", "ensuing", "consequent to", "in the wake of", "downstream from",
-            "post", "beyond", "ahead of", "forward of", "advanced relative to",
-            "more recent than", "more contemporary than", "more modern than",
-            "more current than", "more up-to-date than", "more progressive than",
-            "chronologically superior to", "temporally advanced beyond"
-        ],
-        negative: [
-            "before", "earlier than", "prior to", "preceding", "anterior to",
-            "antecedent to", "preliminary to", "preparatory to", "upstream from",
-            "pre", "ahead of", "in advance of", "preliminary to", "prefatory to",
-            "more ancient than", "more archaic than", "more primitive than",
-            "more antiquated than", "more obsolete than", "more outdated than",
-            "chronologically inferior to", "temporally behind"
-        ]
-    },
+  ComparisonChronological: {
+      /* "Later / earlier" – temporal sequence relationships */
+      positive: [
+          "after", "later than", "subsequent to", "following", "posterior to",
+          "succeeding", "ensuing", "consequent to", "in the wake of", "downstream from",
+          "post", "beyond", "ahead of", "forward of", "advanced relative to",
+          "more recent than", "more contemporary than", "more modern than",
+          "more current than", "more up‑to‑date than", "more progressive than",
+          "chronologically superior to", "temporally advanced beyond",
+          /* fixed relative‑clause variants */
+          "after", "following", "subsequent to", "later than"
+      ],
+      negative: [
+          "before", "earlier than", "prior to", "preceding", "anterior to",
+          "antecedent to", "preliminary to", "preparatory to", "upstream from",
+          "pre", "in advance of", "prefatory to",
+          "more ancient than", "more archaic than", "more primitive than",
+          "more antiquated than", "more obsolete than", "more outdated than",
+          "chronologically inferior to", "temporally behind",
+          /* fixed relative‑clause variants */
+          "before", "prior to", "preceding"
+      ]
+  },
 
-    Direction: {
-        /* Spatial directional relationships */
-        positive: [
-            "north of", "northward from", "to the north of", "in a northerly direction from",
-            "above", "upward from", "higher than", "elevated relative to",
-            "superior in position to", "overhead relative to", "ascending from"
-        ],
-        negative: [
-            "south of", "southward from", "to the south of", "in a southerly direction from",
-            "below", "downward from", "lower than", "beneath", "under",
-            "inferior in position to", "underneath", "descending from"
-        ]
-    },
+  Direction: {
+      /* Spatial directional relationships */
+      positive: [
+          "north of", "northward from", "to the north of", "in a northerly direction from",
+          "above", "upward from", "higher than", "elevated relative to",
+          "superior in position to", "overhead relative to", "ascending from",
+          /* fixed relative‑clause variants */
+          "moving toward", "directed toward", "positioned above", "ascending over"
+      ],
+      negative: [
+          "south of", "southward from", "to the south of", "in a southerly direction from",
+          "below", "downward from", "lower than", "beneath", "under",
+          "inferior in position to", "underneath", "descending from",
+          /* fixed relative‑clause variants */
+          "moving away from", "positioned away from", "situated below", "descending under"
+      ]
+  },
 
-    Direction3DSpatial: {
-        /* Three-dimensional spatial relationships */
-        positive: [
-            "above and forward of", "elevated and ahead of", "superior and anterior to",
-            "higher and in front of", "overhead and before", "ascending and preceding",
-            "upward and forward from", "vertically and horizontally advanced from"
-        ],
-        negative: [
-            "below and behind", "beneath and posterior to", "under and following",
-            "lower and after", "underneath and subsequent to", "descending and trailing",
-            "downward and backward from", "vertically and horizontally receding from"
-        ]
-    },
+  Direction3DSpatial: {
+      /* Three‑dimensional spatial relationships */
+      positive: [
+          "above and forward of", "elevated and ahead of", "superior and anterior to",
+          "higher and in front of", "overhead and before", "ascending and preceding",
+          "upward and forward from", "vertically and horizontally advanced from",
+          /* fixed relative‑clause variants */
+          "positioned above and ahead of", "elevated over and before"
+      ],
+      negative: [
+          "below and behind", "beneath and posterior to", "under and following",
+          "lower and after", "underneath and subsequent to", "descending and trailing",
+          "downward and backward from", "vertically and horizontally receding from",
+          /* fixed relative‑clause variants */
+          "positioned below and behind", "situated under and after"
+      ]
+  },
 
-    Direction3DTemporal: {
-        /* Temporal relationships in three-dimensional context */
-        positive: [
-            "chronologically and spatially advanced from", "temporally and positionally ahead of",
-            "later and higher than", "subsequent and superior to", "following and above",
-            "ensuing and elevated relative to", "posterior and ascending from"
-        ],
-        negative: [
-            "chronologically and spatially behind", "temporally and positionally below",
-            "earlier and lower than", "prior and inferior to", "preceding and beneath",
-            "antecedent and descending from", "anterior and declining relative to"
-        ]
-    },
+  Direction3DTemporal: {
+      /* Temporal relationships with spatial aspect */
+      positive: [
+          "chronologically and spatially advanced from", "temporally and positionally ahead of",
+          "later and higher than", "subsequent and superior to", "following and above",
+          "ensuing and elevated relative to", "posterior and ascending from",
+          /* fixed relative‑clause variants */
+          "positioned later and above", "temporally after and above"
+      ],
+      negative: [
+          "chronologically and spatially behind", "temporally and positionally below",
+          "earlier and lower than", "prior and inferior to", "preceding and beneath",
+          "antecedent and descending from", "anterior and declining relative to",
+          /* fixed relative‑clause variants */
+          "positioned earlier and below", "temporally prior and beneath"
+      ]
+  },
 
-    GraphMatching: {
-        /* Network and connection relationships */
-        positive: [
-            "connected to", "linked with", "joined to", "associated with", "coupled to",
-            "bound to", "affiliated with", "related to", "corresponding to",
-            "networked with", "interfaced with", "bridged to", "tethered to",
-            "correlated with", "synchronized with", "coordinated with"
-        ],
-        negative: [
-            "disconnected from", "unlinked to", "separated from", "isolated from",
-            "detached from", "independent of", "unrelated to", "dissociated from",
-            "unaffiliated with", "uncoupled from", "autonomous relative to",
-            "discrete from", "uncoordinated with", "asynchronous with"
-        ]
-    },
+  GraphMatching: {
+      /* Network and connection relationships */
+      positive: [
+          "connected to", "linked with", "joined to", "associated with", "coupled to",
+          "bound to", "affiliated with", "related to", "corresponding to",
+          "networked with", "interfaced with", "bridged to", "tethered to",
+          "correlated with", "synchronized with", "coordinated with",
+          /* fixed relative‑clause variants */
+          "connected to", "interfaced with", "communicating through"
+      ],
+      negative: [
+          "disconnected from", "unlinked to", "separated from", "isolated from",
+          "detached from", "independent of", "unrelated to", "dissociated from",
+          "unaffiliated with", "uncoupled from", "autonomous relative to",
+          "discrete from", "uncoordinated with", "asynchronous with",
+          /* fixed relative‑clause variants */
+          "disconnected from", "isolated from"
+      ]
+  },
 
-    Analogy: {
-        /* Relationship comparison expressions */
-        positive: [
-            "relates to", "corresponds to", "parallels", "mirrors the relationship of",
-            "exhibits the same pattern as", "demonstrates similarity to", "reflects",
-            "echoes the connection between", "replicates the association of",
-            "emulates the relationship between", "follows the same logic as"
-        ],
-        negative: [
-            "contrasts with", "differs from", "opposes the relationship of",
-            "contradicts the pattern of", "inverts the connection between",
-            "reverses the association of", "negates the relationship between",
-            "stands contrary to", "diverges from the logic of"
-        ]
-    },
+  Analogy: {
+      /* Relationship comparison expressions */
+      positive: [
+          "relates to", "corresponds to", "parallels", "mirrors the relationship of",
+          "exhibits the same pattern as", "demonstrates similarity to", "reflects",
+          "echoes the connection between", "replicates the association of",
+          "emulates the relationship between", "follows the same logic as",
+          /* fixed relative‑clause variants */
+          "analogous to", "correspondent to"
+      ],
+      negative: [
+          "contrasts with", "differs from", "opposes the relationship of",
+          "contradicts the pattern of", "inverts the connection between",
+          "reverses the association of", "negates the relationship between",
+          "stands contrary to", "diverges from the logic of",
+          /* fixed relative‑clause variants */
+          "divergent from", "departing from"
+      ]
+  },
 
-    Binary: {
-        /* Logical operation relationships */
-        positive: [
-            "affirms", "confirms", "validates", "verifies", "substantiates",
-            "corroborates", "establishes", "demonstrates", "proves",
-            "authenticates", "certifies", "endorses", "supports"
-        ],
-        negative: [
-            "negates", "refutes", "contradicts", "disproves", "invalidates",
-            "falsifies", "contravenes", "opposes", "disputes", "challenges",
-            "undermines", "discredits", "repudiates", "denies"
-        ]
-    }
+  Binary: {
+      /* Logical validation relationships */
+      positive: [
+          "affirms", "confirms", "validates", "verifies", "substantiates",
+          "corroborates", "establishes", "demonstrates", "proves",
+          "authenticates", "certifies", "endorses", "supports",
+          /* fixed relative‑clause variants */
+          "verified by", "confirmed by"
+      ],
+      negative: [
+          "negates", "refutes", "contradicts", "disproves", "invalidates",
+          "falsifies", "contravenes", "opposes", "disputes", "challenges",
+          "undermines", "discredits", "repudiates", "denies",
+          /* fixed relative‑clause variants */
+          "refuted by", "falsified by"
+      ]
+  }
 };
 const randomFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 

@@ -15,7 +15,7 @@
     </ng-container>
 </ng-template>
 
-<app-card>
+<app-card class="question-modal-large">
     <div body class="battlefield" [ngStyle]="{ width: (gameMode === '1') ? '100%' : 'auto' }">
         <div class="timerbar-wrap">
             <ngb-progressbar *ngIf="timerType !== '0'" class="timerbar" type="success" [value]="100 * gameTimerService.remainingSeconds / timerTimeSeconds">
@@ -113,6 +113,7 @@
 
             <!-- Regular Question Template -->
             <ng-template #regularQuestionTemplate>
+                <!-- Always show question content first -->
                 <div>
                     <div class="small text-muted">Premises</div>
                     <div class="premises" *ngIf="sylSrv.question.premises as premises">
@@ -137,8 +138,96 @@
     </div>
 
     <div footer class="d-flex gap-3 justify-content-center">
-        <button *ngIf="!trueButtonToTheRight" class="btn btn-lg btn-success col-md-3 col-4" (click)="sylSrv.checkQuestion(true)">True</button>
-        <button class="btn btn-lg btn-danger col-md-3 col-4" (click)="sylSrv.checkQuestion(false)">False</button>
-        <button *ngIf="trueButtonToTheRight" class="btn btn-lg btn-success col-md-3 col-4" (click)="sylSrv.checkQuestion(true)">True</button>
+        <!-- Matrix Reasoning: Show submit button if option selected -->
+        <button *ngIf="sylSrv.question.type === 'Matrix Reasoning' && selectedOption"
+                class="btn btn-lg btn-primary col-md-4 col-6" 
+                (click)="submitAnswer()">
+            Submit Answer
+        </button>
+        
+        <!-- Regular questions: True/False buttons (always show for non-Matrix questions) -->
+        <ng-container *ngIf="sylSrv.question.type !== 'Matrix Reasoning'">
+            <button *ngIf="!trueButtonToTheRight" 
+                    class="btn btn-lg btn-success col-md-3 col-4" 
+                    (click)="handleAnswer(true)">True</button>
+            <button class="btn btn-lg btn-danger col-md-3 col-4" 
+                    (click)="handleAnswer(false)">False</button>
+            <button *ngIf="trueButtonToTheRight" 
+                    class="btn btn-lg btn-success col-md-3 col-4" 
+                    (click)="handleAnswer(true)">True</button>
+        </ng-container>
+        
+        <!-- Show graph completion status for graph questions -->
+        <div *ngIf="shouldShowGraphArrangement() && userAnswer !== undefined" class="text-center w-100 mt-2">
+            <div *ngIf="!graphArrangementComplete" class="text-muted">
+                <small>Complete the spatial arrangement above, then your answer will be processed</small>
+            </div>
+            <div *ngIf="graphArrangementComplete" class="text-success">
+                <small><i class="bi bi-check-circle"></i> Spatial arrangement complete!</small>
+            </div>
+        </div>
     </div>
 </app-card>
+
+<!-- Graph Arrangement Modal -->
+<div class="modal fade show d-block" *ngIf="showGraphModal" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered" style="max-width: 95vw;">
+        <div class="modal-content" style="min-height: 90vh;">
+            <div class="modal-header bg-primary text-white">
+                <div>
+                    <h5 class="modal-title mb-0">Construct the Logic Graph</h5>
+                    <div class="text-white-50 small mt-1">
+                        Your answer: <strong class="text-warning">{{ userAnswer ? 'True' : 'False' }}</strong>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="closeGraphModal()"></button>
+            </div>
+            <div class="modal-body p-2 p-md-3" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <div class="alert alert-info mb-3 d-none d-md-block">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Instructions:</strong> Arrange the nodes and connect them to represent the logical relationships from the question.
+                    Then submit your graph to see if your reasoning is correct.
+                </div>
+                
+                <!-- Mobile instructions - shorter version -->
+                <div class="alert alert-info mb-3 d-block d-md-none small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Drag nodes, use connection mode to link them, then submit.
+                </div>
+                
+                <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                    <app-graph-arrangement 
+                        [question]="sylSrv.question" 
+                        [userAnswer]="userAnswer"
+                        (arrangementComplete)="onGraphArrangementComplete($event)"
+                        (arrangementData)="onGraphArrangementData($event)">
+                    </app-graph-arrangement>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <div class="w-100 d-flex flex-column flex-md-row gap-2 justify-content-between align-items-center">
+                    <div class="text-muted small order-2 order-md-1">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <span class="d-none d-md-inline">Tip: Use connection mode to easily link nodes together</span>
+                        <span class="d-inline d-md-none">Use connection mode to link nodes</span>
+                    </div>
+                    <div class="d-flex gap-2 order-1 order-md-2">
+                        <button type="button" class="btn btn-outline-secondary" (click)="closeGraphModal()">
+                            <i class="bi bi-skip-end me-1"></i>
+                            <span class="d-none d-sm-inline">Skip Graph</span>
+                            <span class="d-inline d-sm-none">Skip</span>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-primary" 
+                                [disabled]="!graphArrangementData || !graphArrangementData.edges || graphArrangementData.edges.length === 0"
+                                (click)="submitGraphArrangement()">
+                            <i class="bi bi-check-circle me-1"></i>
+                            <span class="d-none d-sm-inline">Submit Graph & Get Result</span>
+                            <span class="d-inline d-sm-none">Submit</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

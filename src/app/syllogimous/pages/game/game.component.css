@@ -39,3 +39,24 @@
     font-size: 1.2rem;
     line-height: 1.2;
 }
+
+/* Make the question modal bigger */
+.question-modal-large {
+    max-width: 90vw !important;
+    width: 90vw !important;
+}
+
+.question-modal-large .card-body {
+    padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .question-modal-large {
+        max-width: 95vw !important;
+        width: 95vw !important;
+    }
+    
+    .question-modal-large .card-body {
+        padding: 1rem;
+    }
+}

@@ -42,6 +42,7 @@ import { OtherGamesComponent } from './pages/other-games/other-games.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/graph-matching.component';
 import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
+import { GraphArrangementComponent } from './components/graph-arrangement/graph-arrangement.component';
 
 const routes: Routes = [
     {
@@ -122,6 +123,7 @@ const routes: Routes = [
         TiersMatrixComponent,
         OtherGamesComponent,
         SettingsComponent,
+        GraphArrangementComponent,
     ],
     imports: [
         CommonModule,

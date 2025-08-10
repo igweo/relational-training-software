@@ -23,6 +23,12 @@ export class GameComponent {
     timerTimeSeconds = 0;
     trueButtonToTheRight = false;
     selectedOption: string | null = null;
+    
+    // Graph arrangement state
+    showGraphModal = false;
+    userAnswer: boolean | undefined = undefined;
+    graphArrangementComplete = false;
+    graphArrangementData: any = null;
 
     constructor(
         public sylSrv: SyllogimousService,
@@ -159,12 +165,269 @@ export class GameComponent {
 
     selectOption(option: string) {
         this.selectedOption = option;
+    }
+
+    handleAnswer(answer: boolean) {
+        this.userAnswer = answer;
+        this.gameTimerService.stop();
         
+        // For graph arrangement questions, show the graph modal
+        if (this.shouldShowGraphArrangement()) {
+            this.showGraphModal = true;
+        } else {
+            // For regular questions, process the answer immediately
+            this.sylSrv.checkQuestion(answer);
+        }
+    }
+
+    submitAnswer() {
         // For Matrix Reasoning questions, check if the selected option is correct
-        if (this.sylSrv.question.type === 'Matrix Reasoning') {
-            const isCorrect = option === this.sylSrv.question.correctAnswer;
+        if (this.sylSrv.question.type === 'Matrix Reasoning' && this.selectedOption) {
+            const isCorrect = this.selectedOption === this.sylSrv.question.correctAnswer;
             this.sylSrv.checkQuestion(isCorrect);
         }
+        this.gameTimerService.stop();
+    }
+
+    onGraphArrangementComplete(isComplete: boolean) {
+        this.graphArrangementComplete = isComplete;
+    }
+
+    onGraphArrangementData(data: any) {
+        this.graphArrangementData = data;
+    }
+
+    submitGraphArrangement() {
+        // Validate the graph arrangement and provide feedback
+        const isGraphCorrect = this.validateGraphArrangement();
+        
+        // Close the graph modal
+        this.showGraphModal = false;
+        
+        // Combine the original True/False answer with graph correctness
+        // For now, we'll use the original answer, but you could modify this logic
+        const finalAnswer = this.userAnswer && isGraphCorrect;
+        
+        this.sylSrv.checkQuestion(finalAnswer);
+    }
+
+    closeGraphModal() {
+        this.showGraphModal = false;
+        // Process the original answer without graph validation
+        if (this.userAnswer !== undefined) {
+            this.sylSrv.checkQuestion(this.userAnswer);
+        }
+    }
+
+    private validateGraphArrangement(): boolean {
+        if (!this.graphArrangementData) {
+            return false;
+        }
+
+        const { nodes, edges } = this.graphArrangementData;
+        
+        // Basic validation - ensure minimum interaction
+        if (!nodes || nodes.length === 0) {
+            return false;
+        }
+
+        // Must have at least one edge
+        if (!edges || edges.length === 0) {
+            return false;
+        }
+
+        // Get expected relationships from question analysis
+        const expectedRelationships = this.analyzeQuestionRelationships();
+        
+        // Validate the user's graph against expected relationships
+        return this.validateGraphStructure(edges, expectedRelationships);
+    }
+
+    private analyzeQuestionRelationships(): { from: string, to: string, type: 'similar' | 'different' | 'directed' }[] {
+        const relationships: { from: string, to: string, type: 'similar' | 'different' | 'directed' }[] = [];
+        const questionType = this.sylSrv.question.type;
+
+        // Extract objects from premises
+        const objects = this.getQuestionObjects();
+        
+        switch (questionType) {
+            case 'Distinction':
+                // For distinction questions, analyze premise relationships
+                this.sylSrv.question.premises.forEach(premise => {
+                    const premiseObjects = this.extractObjectsFromText(premise);
+                    if (premiseObjects.length >= 2) {
+                        const [obj1, obj2] = premiseObjects;
+                        
+                        // Analyze relationship type based on keywords
+                        if (premise.includes('same as') || premise.includes('on par with') || premise.includes('indistinguishable')) {
+                            relationships.push({ from: obj1, to: obj2, type: 'similar' });
+                        } else if (premise.includes('opposite') || premise.includes('different') || premise.includes('disproportionate')) {
+                            relationships.push({ from: obj1, to: obj2, type: 'different' });
+                        } else {
+                            relationships.push({ from: obj1, to: obj2, type: 'directed' });
+                        }
+                    }
+                });
+                break;
+
+            case 'Comparison Numerical':
+            case 'Comparison Chronological':
+                // For comparison questions, create directed relationships based on order
+                this.sylSrv.question.premises.forEach(premise => {
+                    const premiseObjects = this.extractObjectsFromText(premise);
+                    if (premiseObjects.length >= 2) {
+                        const [obj1, obj2] = premiseObjects;
+                        
+                        // Determine direction based on comparison words
+                        if (premise.includes('greater') || premise.includes('more') || premise.includes('after') || premise.includes('larger')) {
+                            relationships.push({ from: obj1, to: obj2, type: 'directed' });
+                        } else if (premise.includes('less') || premise.includes('before') || premise.includes('smaller')) {
+                            relationships.push({ from: obj2, to: obj1, type: 'directed' });
+                        }
+                    }
+                });
+                break;
+
+            case 'Syllogism':
+                // For syllogisms, create logical connections
+                this.sylSrv.question.premises.forEach(premise => {
+                    const premiseObjects = this.extractObjectsFromText(premise);
+                    if (premiseObjects.length >= 2) {
+                        const [obj1, obj2] = premiseObjects;
+                        relationships.push({ from: obj1, to: obj2, type: 'directed' });
+                    }
+                });
+                break;
+
+            default:
+                // Generic relationship extraction
+                this.sylSrv.question.premises.forEach(premise => {
+                    const premiseObjects = this.extractObjectsFromText(premise);
+                    if (premiseObjects.length >= 2) {
+                        const [obj1, obj2] = premiseObjects;
+                        relationships.push({ from: obj1, to: obj2, type: 'directed' });
+                    }
+                });
+                break;
+        }
+
+        return relationships;
+    }
+
+    private validateGraphStructure(userEdges: any[], expectedRelationships: any[]): boolean {
+        console.log('Validating graph structure...');
+        console.log('User edges:', userEdges);
+        console.log('Expected relationships:', expectedRelationships);
+
+        // If no expected relationships, accept any reasonable graph structure
+        if (expectedRelationships.length === 0) {
+            return userEdges.length > 0;
+        }
+
+        let correctRelationships = 0;
+        const totalExpected = expectedRelationships.length;
+
+        expectedRelationships.forEach(expected => {
+            // Check for exact match
+            const exactMatch = userEdges.find(edge => 
+                edge.from === expected.from && 
+                edge.to === expected.to &&
+                (expected.type !== 'similar' || !edge.directed) // Similar relationships should be undirected
+            );
+
+            // Check for reverse match (for undirected relationships)
+            const reverseMatch = userEdges.find(edge => 
+                edge.from === expected.to && 
+                edge.to === expected.from &&
+                (expected.type === 'similar' || expected.type === 'different')
+            );
+
+            if (exactMatch || reverseMatch) {
+                correctRelationships++;
+                console.log(`Found correct relationship: ${expected.from} -> ${expected.to} (${expected.type})`);
+            } else {
+                console.log(`Missing relationship: ${expected.from} -> ${expected.to} (${expected.type})`);
+            }
+        });
+
+        // Consider graph correct if at least 60% of relationships are captured
+        const accuracy = correctRelationships / totalExpected;
+        console.log(`Graph accuracy: ${accuracy * 100}% (${correctRelationships}/${totalExpected})`);
+        
+        return accuracy >= 0.6;
+    }
+
+    private getQuestionObjects(): string[] {
+        const objects = new Set<string>();
+        
+        // Extract objects from premises
+        this.sylSrv.question.premises.forEach(premise => {
+            const premiseObjects = this.extractObjectsFromText(premise);
+            premiseObjects.forEach(obj => objects.add(obj));
+        });
+
+        // Extract objects from conclusion
+        const conclusionStr = Array.isArray(this.sylSrv.question.conclusion) 
+            ? this.sylSrv.question.conclusion.join(' ') 
+            : this.sylSrv.question.conclusion;
+        
+        const conclusionObjects = this.extractObjectsFromText(conclusionStr);
+        conclusionObjects.forEach(obj => objects.add(obj));
+
+        const result = Array.from(objects);
+        console.log('Extracted objects from question:', result);
+        
+        // Add test data if no objects found
+        if (result.length === 0) {
+            console.log('No objects found, adding test data');
+            return ['NodeA', 'NodeB', 'NodeC'];
+        }
+
+        return result;
+    }
+
+    private extractObjectsFromText(text: string): string[] {
+        const objects: string[] = [];
+        
+        // First try to extract from HTML tags
+        const matches = text.match(/<span class="subject">(.*?)<\/span>/g);
+        if (matches) {
+            matches.forEach(match => {
+                const obj = match.replace(/<span class="subject">|<\/span>/g, '');
+                objects.push(obj);
+            });
+        } else {
+            // Fallback: extract capitalized words from plain text
+            const capitalizedWords = text.match(/\b[A-Z][\w-]*\b/g);
+            if (capitalizedWords) {
+                capitalizedWords.forEach(word => {
+                    // Filter out common words that shouldn't be objects
+                    if (!['A', 'An', 'The', 'Is', 'Are', 'Was', 'Were', 'All', 'Some', 'No', 'Not', 'Based', 'For', 'With'].includes(word)) {
+                        objects.push(word);
+                    }
+                });
+            }
+        }
+        
+        return objects;
+    }
+
+    shouldShowGraphArrangement(): boolean {
+        // Show graph arrangement for certain question types
+        const graphQuestionTypes = [
+            'Distinction',
+            'Direction',
+            'Direction3D Spatial', 
+            'Direction3D Temporal',
+            'Linear Arrangement',
+            'Circular Arrangement',
+            'Graph Matching',
+            'Syllogism',
+            'Comparison Numerical',
+            'Comparison Chronological'
+        ];
+        
+        return graphQuestionTypes.includes(this.sylSrv.question.type);
     }
 
     kickTimer = async () => {
