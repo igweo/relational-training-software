@@ -447,22 +447,87 @@ export class GraphArrangementComponent implements AfterViewInit {
   private getDistinctionEdges(): GraphEdge[] {
     const edges: GraphEdge[] = [];
     
+    console.log('Getting distinction edges for question:', this.question);
+    console.log('Question buckets:', this.question.buckets);
+    console.log('Expected nodes:', this.expectedNodes);
+    
     // For distinction questions, group similar objects
     // Objects in the same group should have bidirectional edges
     if (this.question.buckets && this.question.buckets.length >= 2) {
-      this.question.buckets.forEach(bucket => {
+      console.log('Processing buckets:', this.question.buckets);
+      
+      this.question.buckets.forEach((bucket, bucketIndex) => {
+        console.log(`Processing bucket ${bucketIndex}:`, bucket);
+        
         if (bucket.length > 1) {
           // Connect all objects in the same bucket with bidirectional edges
           for (let i = 0; i < bucket.length; i++) {
             for (let j = i + 1; j < bucket.length; j++) {
-              edges.push({ from: bucket[i], to: bucket[j], directed: false });
+              const edge = { from: bucket[i], to: bucket[j], directed: false };
+              console.log('Creating distinction edge:', edge);
+              edges.push(edge);
+            }
+          }
+        }
+      });
+    } else {
+      console.log('No valid buckets found for distinction question');
+      
+      // Fallback: try to infer groupings from premises if buckets are not available
+      const groupedItems = this.inferDistinctionGroupsFromPremises();
+      console.log('Inferred groups:', groupedItems);
+      
+      Object.values(groupedItems).forEach((group: string[]) => {
+        if (group.length > 1) {
+          for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+              edges.push({ from: group[i], to: group[j], directed: false });
             }
           }
         }
       });
     }
 
+    console.log('Final distinction edges:', edges);
     return edges;
+  }
+
+  private inferDistinctionGroupsFromPremises(): Record<string, string[]> {
+    const groups: Record<string, string[]> = {};
+    
+    // Analyze premises to group objects that are described as similar/same
+    this.question.premises.forEach(premise => {
+      const objects = this.extractObjectsFromText(premise);
+      
+      if (objects.length >= 2) {
+        // Check if the premise indicates similarity/sameness
+        const isSimilarityPremise = premise.includes('same') || premise.includes('identical') || 
+                                   premise.includes('equivalent') || premise.includes('similar') ||
+                                   !premise.includes('different') && !premise.includes('distinct');
+        
+        if (isSimilarityPremise) {
+          // Group these objects together
+          const groupKey = objects.sort().join(',');
+          if (!groups[groupKey]) {
+            groups[groupKey] = [];
+          }
+          objects.forEach(obj => {
+            if (!groups[groupKey].includes(obj)) {
+              groups[groupKey].push(obj);
+            }
+          });
+        }
+      }
+    });
+    
+    // If no clear groups found, create individual groups
+    if (Object.keys(groups).length === 0) {
+      this.expectedNodes.forEach((node, index) => {
+        groups[`group_${index}`] = [node];
+      });
+    }
+    
+    return groups;
   }
 
   private getDirectionEdges(): GraphEdge[] {
