@@ -277,6 +277,86 @@ a:hover {
     padding: 1.5rem;
 }
 
+/* Mobile Modal Full-Screen Responsiveness */
+@media (max-width: 768px) {
+    .modal {
+        padding: 0 !important;
+    }
+    
+    .modal-dialog {
+        max-width: 100vw !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        max-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .modal-content {
+        max-width: 100vw !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        border: none !important;
+        overflow-x: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .modal-body {
+        max-width: 100vw !important;
+        width: 100vw !important;
+        overflow-x: hidden !important;
+        padding: 1rem !important;
+        box-sizing: border-box !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem !important;
+        border-bottom: 1px solid var(--border-light) !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .modal-footer {
+        padding: 1rem 1.5rem !important;
+        border-top: 1px solid var(--border-light) !important;
+        flex-shrink: 0 !important;
+    }
+    
+    /* Ensure no horizontal scrolling in modals */
+    .modal * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Override any fixed widths in modal content */
+    .modal .container,
+    .modal .row,
+    .modal .col {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+}
+
+/* Extra small devices - full screen modals */
+@media (max-width: 576px) {
+    .modal-body {
+        padding: 0.75rem !important;
+    }
+    
+    .modal-header {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem 1rem !important;
+    }
+}
+
 /* Playcard Toolbar */
 .playcard-toolbar {
     background: var(--background-secondary);

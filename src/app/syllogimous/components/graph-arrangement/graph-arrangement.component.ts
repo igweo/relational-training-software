@@ -59,9 +59,10 @@ export class GraphArrangementComponent implements AfterViewInit {
   private boundMouseMove!: (e: MouseEvent) => void;
   private boundMouseUp!: (e: MouseEvent) => void;
   private boundContextMenu!: (e: MouseEvent) => void;
-  private boundTouchStart!: (e: TouchEvent) => void;
-  private boundTouchMove!: (e: TouchEvent) => void;
-  private boundTouchEnd!: (e: TouchEvent) => void;
+  private boundPointerDown!: (e: PointerEvent) => void;
+  private boundPointerMove!: (e: PointerEvent) => void;
+  private boundPointerUp!: (e: PointerEvent) => void;
+  private boundPointerCancel!: (e: PointerEvent) => void;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -167,9 +168,14 @@ export class GraphArrangementComponent implements AfterViewInit {
     
     // Calculate canvas dimensions based on device type
     if (isMobile) {
-      // Mobile: prioritize fitting width, reasonable height
-      this.canvasWidth = Math.min(availableWidth - 16, window.innerWidth - 32);
-      this.canvasHeight = Math.min(this.canvasWidth * 0.6, window.innerHeight * 0.3, 280);
+      // Mobile: prioritize full width usage in modal
+      if (isModal) {
+        this.canvasWidth = Math.min(window.innerWidth - 20, availableWidth - 10);
+        this.canvasHeight = Math.min(window.innerHeight * 0.35, 300);
+      } else {
+        this.canvasWidth = Math.min(availableWidth - 16, window.innerWidth - 32);
+        this.canvasHeight = Math.min(this.canvasWidth * 0.6, window.innerHeight * 0.3, 280);
+      }
       
       // Ensure minimum viable mobile size
       this.canvasWidth = Math.max(this.canvasWidth, 280);
@@ -276,9 +282,10 @@ export class GraphArrangementComponent implements AfterViewInit {
     canvas.removeEventListener('mousemove', this.boundMouseMove);
     canvas.removeEventListener('mouseup', this.boundMouseUp);
     canvas.removeEventListener('contextmenu', this.boundContextMenu);
-    canvas.removeEventListener('touchstart', this.boundTouchStart);
-    canvas.removeEventListener('touchmove', this.boundTouchMove);
-    canvas.removeEventListener('touchend', this.boundTouchEnd);
+    canvas.removeEventListener('pointerdown', this.boundPointerDown);
+    canvas.removeEventListener('pointermove', this.boundPointerMove);
+    canvas.removeEventListener('pointerup', this.boundPointerUp);
+    canvas.removeEventListener('pointercancel', this.boundPointerCancel);
     
     // Create bound methods for better event handling
     this.boundMouseDown = (e) => this.onMouseDown(e);
@@ -288,21 +295,23 @@ export class GraphArrangementComponent implements AfterViewInit {
       e.preventDefault();
       this.onRightClick(e);
     };
-    this.boundTouchStart = (e) => this.onTouchStart(e);
-    this.boundTouchMove = (e) => this.onTouchMove(e);
-    this.boundTouchEnd = (e) => this.onTouchEnd(e);
+    this.boundPointerDown = (e) => this.onPointerDown(e);
+    this.boundPointerMove = (e) => this.onPointerMove(e);
+    this.boundPointerUp = (e) => this.onPointerUp(e);
+    this.boundPointerCancel = (e) => this.onPointerCancel(e);
     
-    // Add event listeners with better Firefox compatibility
+    // Add event listeners with better compatibility
     canvas.addEventListener('mousedown', this.boundMouseDown, { passive: false });
     canvas.addEventListener('mousemove', this.boundMouseMove, { passive: false });
     canvas.addEventListener('mouseup', this.boundMouseUp, { passive: false });
     canvas.addEventListener('contextmenu', this.boundContextMenu, { passive: false });
     
-    // Add touch support for mobile
-    if (isMobile || 'ontouchstart' in window) {
-      canvas.addEventListener('touchstart', this.boundTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
-      canvas.addEventListener('touchend', this.boundTouchEnd, { passive: false });
+    // Add pointer support for touch and mouse unified handling
+    if ('PointerEvent' in window) {
+      canvas.addEventListener('pointerdown', this.boundPointerDown, { passive: false });
+      canvas.addEventListener('pointermove', this.boundPointerMove, { passive: false });
+      canvas.addEventListener('pointerup', this.boundPointerUp, { passive: false });
+      canvas.addEventListener('pointercancel', this.boundPointerCancel, { passive: false });
     }
   }
 
@@ -798,6 +807,94 @@ export class GraphArrangementComponent implements AfterViewInit {
     this.isDragging = false;
     this.dragNode = null;
     this.checkArrangement();
+  }
+
+  private onPointerDown(e: PointerEvent) {
+    e.preventDefault();
+    
+    const rect = this.canvas.nativeElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const node = this.getNodeAt(x, y);
+    
+    if (e.button === 0 || e.pointerType === 'touch') { // Left click or touch
+      if (node) {
+        if (this.connectionMode) {
+          // Handle connection mode clicks/taps
+          this.handleConnectionModeClick(node);
+        } else {
+          // Regular drag mode
+          this.isDragging = true;
+          this.dragNode = node;
+        }
+      }
+    }
+  }
+
+  private onPointerMove(e: PointerEvent) {
+    e.preventDefault();
+    
+    const rect = this.canvas.nativeElement.getBoundingClientRect();
+    this.mouseX = e.clientX - rect.left;
+    this.mouseY = e.clientY - rect.top;
+    
+    if (this.isDragging && this.dragNode) {
+      this.dragNode.x = this.mouseX;
+      this.dragNode.y = this.mouseY;
+      this.render();
+    }
+    
+    if (this.isDrawingEdge) {
+      this.render();
+    }
+  }
+
+  private onPointerUp(e: PointerEvent) {
+    e.preventDefault();
+    
+    const rect = this.canvas.nativeElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (this.isDrawingEdge && this.edgeStartNode) {
+      const endNode = this.getNodeAt(x, y);
+      if (endNode && endNode !== this.edgeStartNode) {
+        // Check if edge already exists
+        const existingEdge = this.edges.find(edge => 
+          edge.from === this.edgeStartNode!.id && edge.to === endNode.id
+        );
+        
+        if (!existingEdge) {
+          this.edges.push({
+            from: this.edgeStartNode.id,
+            to: endNode.id,
+            directed: true
+          });
+        }
+      }
+      
+      this.isDrawingEdge = false;
+      this.edgeStartNode = null;
+    }
+    
+    this.isDragging = false;
+    this.dragNode = null;
+    
+    this.render();
+    this.checkArrangement();
+  }
+
+  private onPointerCancel(e: PointerEvent) {
+    e.preventDefault();
+    
+    // Reset dragging state on pointer cancel
+    this.isDragging = false;
+    this.dragNode = null;
+    this.isDrawingEdge = false;
+    this.edgeStartNode = null;
+    
+    this.render();
   }
 
   private getNodeAt(x: number, y: number): GraphNode | null {

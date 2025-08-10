@@ -6,6 +6,48 @@
   box-sizing: border-box;
 }
 
+/* Modal-specific responsive styles */
+:host-context(.modal) .graph-arrangement-container {
+  max-width: 100%;
+  width: 100%;
+  padding: 15px;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Ensure modal body doesn't overflow */
+:host-context(.modal-body) {
+  overflow-x: hidden;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Modal dialog responsive adjustments */
+:host-context(.modal-dialog) {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Modal content responsive adjustments */
+:host-context(.modal-content) {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+/* Mobile-specific modal adjustments - now handled by global styles */
+@media (max-width: 768px) {
+  :host-context(.modal) .graph-arrangement-container {
+    padding: 0.5rem;
+    margin: 0;
+  }
+}
+
 .instructions {
   background: #f8f9fa;
   border: 1px solid #dee2e6;
