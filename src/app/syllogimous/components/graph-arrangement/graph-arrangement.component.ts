@@ -135,107 +135,91 @@ export class GraphArrangementComponent implements AfterViewInit {
     const canvas = this.canvas.nativeElement;
     const container = canvas.parentElement!;
     
-    // Firefox-specific: Ensure proper canvas context setup
-    // Clear any existing canvas context first
+    // Clear canvas to ensure proper context setup
     canvas.width = 1;
     canvas.height = 1;
     
-    // Get actual container dimensions with multiple fallback strategies
+    // Get container and viewport information
     const rect = container.getBoundingClientRect();
-    const parentRect = container.parentElement?.getBoundingClientRect();
     const isModal = container.closest('.modal-dialog') !== null;
-    
-    console.log('Canvas setup - Container rect:', rect);
-    console.log('Canvas setup - Parent rect:', parentRect);
-    console.log('Canvas setup - Is in modal:', isModal);
-    
-    // Use actual container size with multiple fallback strategies
-    let containerWidth = rect.width;
-    let containerHeight = rect.height;
-    
-    // Special handling for modal context
-    if (isModal) {
-      const modalDialog = container.closest('.modal-dialog') as HTMLElement;
-      const modalRect = modalDialog?.getBoundingClientRect();
-      if (modalRect) {
-        containerWidth = Math.min(modalRect.width - 80, containerWidth || modalRect.width - 80);
-        containerHeight = modalRect.height * 0.6;
-      }
-    }
-    
-    // If container has no width/height, try parent or viewport with responsive considerations
-    if (containerWidth === 0 || containerWidth < 100) {
-      containerWidth = isModal ? 
-        Math.min(window.innerWidth - 100, 1000) :
-        (parentRect?.width || Math.min(window.innerWidth * 0.9, 800));
-    }
-    if (containerHeight === 0 || containerHeight < 100) {
-      containerHeight = isModal ?
-        Math.min(window.innerHeight * 0.5, 600) :
-        (parentRect?.height || Math.min(window.innerHeight * 0.5, 500));
-    }
-    
-    // Make canvas fully responsive with device detection
     const isMobile = window.innerWidth < 768;
     const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
     const devicePixelRatio = window.devicePixelRatio || 1;
     
-    if (isMobile) {
-      // Mobile: use most of screen width, reasonable height
-      if (isModal) {
-        this.canvasWidth = Math.min(containerWidth - 10, window.innerWidth - 40);
-        this.canvasHeight = Math.min(containerHeight - 10, window.innerHeight * 0.3, 250);
-      } else {
-        this.canvasWidth = Math.min(containerWidth - 20, window.innerWidth - 30);
-        this.canvasHeight = Math.min(containerHeight - 20, window.innerHeight * 0.35, 300);
-      }
-    } else if (isTablet) {
-      // Tablet: balanced approach
-      if (isModal) {
-        this.canvasWidth = Math.min(containerWidth - 20, window.innerWidth - 80);
-        this.canvasHeight = Math.min(containerHeight - 20, window.innerHeight * 0.4, 350);
-      } else {
-        this.canvasWidth = Math.min(containerWidth - 30, window.innerWidth - 60);
-        this.canvasHeight = Math.min(containerHeight - 30, window.innerHeight * 0.4, 400);
-      }
-    } else {
-      // Desktop: optimal size with maximum limits
-      if (isModal) {
-        this.canvasWidth = Math.min(containerWidth - 40, 900);
-        this.canvasHeight = Math.min(containerHeight - 40, 450);
-      } else {
-        this.canvasWidth = Math.min(containerWidth - 40, 800);
-        this.canvasHeight = Math.min(containerHeight - 40, 500);
-      }
+    console.log('Canvas setup - Container rect:', rect);
+    console.log(`Device: mobile=${isMobile}, tablet=${isTablet}, modal=${isModal}`);
+    
+    // Calculate available space
+    let availableWidth = rect.width || container.clientWidth;
+    let availableHeight = rect.height || container.clientHeight;
+    
+    // Fallback if container dimensions not available
+    if (availableWidth < 100) {
+      availableWidth = isModal ? 
+        Math.min(window.innerWidth - 60, 800) : 
+        Math.min(window.innerWidth * 0.9, 800);
+    }
+    if (availableHeight < 100) {
+      availableHeight = isModal ?
+        Math.min(window.innerHeight * 0.4, 400) :
+        Math.min(window.innerHeight * 0.4, 500);
     }
     
-    // Ensure minimum viable sizes
-    this.canvasWidth = Math.max(this.canvasWidth, isMobile ? 280 : 400);
-    this.canvasHeight = Math.max(this.canvasHeight, isMobile ? 200 : 300);
+    // Calculate canvas dimensions based on device type
+    if (isMobile) {
+      // Mobile: prioritize fitting width, reasonable height
+      this.canvasWidth = Math.min(availableWidth - 16, window.innerWidth - 32);
+      this.canvasHeight = Math.min(this.canvasWidth * 0.6, window.innerHeight * 0.3, 280);
+      
+      // Ensure minimum viable mobile size
+      this.canvasWidth = Math.max(this.canvasWidth, 280);
+      this.canvasHeight = Math.max(this.canvasHeight, 200);
+    } else if (isTablet) {
+      // Tablet: balanced approach
+      this.canvasWidth = Math.min(availableWidth - 24, 600);
+      this.canvasHeight = Math.min(this.canvasWidth * 0.7, 420);
+      
+      // Ensure minimum tablet size
+      this.canvasWidth = Math.max(this.canvasWidth, 400);
+      this.canvasHeight = Math.max(this.canvasHeight, 280);
+    } else {
+      // Desktop: optimal size with maximum limits
+      this.canvasWidth = Math.min(availableWidth - 40, 800);
+      this.canvasHeight = Math.min(availableHeight - 40, 500);
+      
+      // Ensure minimum desktop size
+      this.canvasWidth = Math.max(this.canvasWidth, 500);
+      this.canvasHeight = Math.max(this.canvasHeight, 350);
+    }
     
-    console.log(`Setting canvas size: ${this.canvasWidth}x${this.canvasHeight} (mobile: ${isMobile}, modal: ${isModal})`);
+    console.log(`Setting canvas size: ${this.canvasWidth}x${this.canvasHeight}`);
     
-    // Firefox compatibility: Set canvas size properly for high-DPI displays
+    // Set up high-DPI canvas rendering
     const displayWidth = this.canvasWidth;
     const displayHeight = this.canvasHeight;
     const actualWidth = displayWidth * devicePixelRatio;
     const actualHeight = displayHeight * devicePixelRatio;
     
-    // Set the actual canvas size in pixels
+    // Set the actual canvas resolution
     canvas.width = actualWidth;
     canvas.height = actualHeight;
     
-    // Set the display size via CSS
-    canvas.style.width = displayWidth + 'px';
-    canvas.style.height = displayHeight + 'px';
+    // Set the display size via CSS - this makes it responsive
+    if (isMobile) {
+      // On mobile, let CSS control width for full responsiveness
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.maxWidth = displayWidth + 'px';
+      canvas.style.maxHeight = displayHeight + 'px';
+    } else {
+      // On desktop/tablet, use fixed dimensions
+      canvas.style.width = displayWidth + 'px';
+      canvas.style.height = displayHeight + 'px';
+    }
     
-    // Update our internal dimensions to match display size
+    // Update our internal dimensions
     this.canvasWidth = displayWidth;
     this.canvasHeight = displayHeight;
-    
-    // Ensure the container adapts to canvas size
-    container.style.width = displayWidth + 'px';
-    container.style.height = displayHeight + 'px';
     
     // Firefox-specific: Get context with better error handling
     let ctx: CanvasRenderingContext2D | null = null;

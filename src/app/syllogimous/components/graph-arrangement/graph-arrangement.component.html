@@ -19,25 +19,25 @@
     </canvas>
   </div>
 
-  <div class="controls">
-    <button class="btn btn-secondary me-2" (click)="resetGraph()">
+  <div class="controls d-flex flex-wrap justify-content-center align-items-center gap-2">
+    <button class="btn btn-secondary" (click)="resetGraph()">
       <i class="bi bi-arrow-clockwise"></i> Reset
     </button>
-    <button class="btn me-2" 
+    <button class="btn" 
             [class.btn-primary]="connectionMode" 
             [class.btn-outline-primary]="!connectionMode"
             (click)="toggleConnectionMode()">
       <i class="bi bi-arrow-left-right"></i> 
       {{ connectionMode ? 'Exit' : 'Enter' }} Connection Mode
     </button>
-    <button class="btn btn-info me-2" (click)="addRandomEdges()" *ngIf="expectedEdges.length > 0">
+    <button class="btn btn-info" (click)="addRandomEdges()" *ngIf="expectedEdges.length > 0">
       <i class="bi bi-shuffle"></i> Add Sample Edges
     </button>
   </div>
 
   <div class="status" *ngIf="nodes.length > 0">
-    <div class="row">
-      <div class="col-md-6">
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
         <div class="info-card">
           <h6>Nodes ({{nodes.length}})</h6>
           <div class="node-list">
@@ -47,7 +47,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-12 col-md-6">
         <div class="info-card">
           <h6>Edges ({{edges.length}})</h6>
           <div class="edge-list">
