@@ -34,12 +34,12 @@
             </li>
         
             <li class="list-group-item flex-between">
-                <b>Playtime Today</b>
+                <b>Session Duration Today</b>
                 <div>{{ formatTime(timePlayedToday) }}</div>
             </li>
 
             <li class="list-group-item flex-between">
-                <b>Playtime This Week</b>
+                <b>Session Duration This Week</b>
                 <div>{{ formatTime(timePlayedThisWeek) }}</div>
             </li>
         </ul>
@@ -55,12 +55,12 @@
         <button
             style="width: 150px;"
             class="btn btn-primary"
-            (click)="sylSrv.playArcadeMode()"
-        >Arcade</button>
+            (click)="startTrainingMode()"
+        >Training Mode</button>
         <button
             style="width: 150px;"
             class="btn btn-outline-primary"
-            (click)="router.navigate([EnumScreens.PlaygroundMode])"
-        >Playground</button>
+            (click)="startPracticeMode()"
+        >Practice Mode</button>
     </div>
 </app-card>

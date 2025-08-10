@@ -38,7 +38,6 @@ import { GameModeChooseComponent } from './pages/settings/game-mode-choose/game-
 import { EnumQuestionType } from './constants/question.constants';
 import { EnumScreens } from './constants/syllogimous.constants';
 import { TiersMatrixComponent } from './pages/tiers-matrix/tiers-matrix.component';
-import { OtherGamesComponent } from './pages/other-games/other-games.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/graph-matching.component';
 import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
@@ -79,7 +78,6 @@ const routes: Routes = [
             },
             { path: EnumScreens.TiersMatrix, component: TiersMatrixComponent },
             { path: EnumScreens.PlaygroundMode, component: PlaygroundModeComponent },
-            { path: EnumScreens.OtherGames, component: OtherGamesComponent },
         ]
     }
 ];
@@ -121,7 +119,6 @@ const routes: Routes = [
         DailyProgressComponent,
         GameModeChooseComponent,
         TiersMatrixComponent,
-        OtherGamesComponent,
         SettingsComponent,
         GraphArrangementComponent,
     ],

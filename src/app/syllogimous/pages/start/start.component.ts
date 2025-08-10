@@ -5,6 +5,7 @@ import { SyllogimousService } from '../../services/syllogimous.service';
 import { Router } from '@angular/router';
 import { formatTime } from 'src/app/utils/date';
 import { ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
+import { AnalyticsService } from '../../../shared/services/analytics.service';
 
 @Component({
     selector: 'app-start',
@@ -32,7 +33,8 @@ export class StartComponent {
     constructor(
         public sylSrv: SyllogimousService,
         public router: Router,
-        private progressAndPerformanceService: ProgressAndPerformanceService
+        private progressAndPerformanceService: ProgressAndPerformanceService,
+        private analyticsService: AnalyticsService
     ) {
         this.timePlayedToday = progressAndPerformanceService.getTimePlayed(progressAndPerformanceService.getToday());
         this.timePlayedThisWeek = progressAndPerformanceService.getTimePlayedThisWeek(progressAndPerformanceService.getToday());
@@ -67,5 +69,29 @@ export class StartComponent {
             }
             streak.push(q);
         }
+    }
+
+    startTrainingMode() {
+        // Track training mode start
+        this.analyticsService.trackInteraction('training_mode_button', 'click', {
+            current_tier: this.sylSrv.tier,
+            score: this.sylSrv.score,
+            questions_answered: this.questions.length,
+            correct_answers: this.correctQs.length
+        });
+
+        this.sylSrv.playArcadeMode();
+    }
+
+    startPracticeMode() {
+        // Track practice mode start
+        this.analyticsService.trackInteraction('practice_mode_button', 'click', {
+            current_tier: this.sylSrv.tier,
+            score: this.sylSrv.score,
+            questions_answered: this.questions.length,
+            correct_answers: this.correctQs.length
+        });
+
+        this.router.navigate([EnumScreens.PlaygroundMode]);
     }
 }

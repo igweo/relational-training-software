@@ -11,10 +11,9 @@ export enum EnumScreens {
     History = "History",
     Tutorials = "Tutorials",
     Stats = "Stats",
-    PlaygroundMode = "Playground Mode",
+    PlaygroundMode = "Practice Mode",
     Settings = "Settings",
     TiersMatrix = "Tiers Matrix",
-    OtherGames = "Other Games",
 }
 
 export enum EnumTiers {

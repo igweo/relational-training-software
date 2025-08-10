@@ -664,16 +664,21 @@ export class GraphArrangementComponent implements AfterViewInit {
   }
 
   private createConnection(fromNode: GraphNode, toNode: GraphNode) {
-    // Check if edge already exists
+    // Check if edge already exists (for distinction questions, check both directions since they're symmetric)
     const existingEdge = this.edges.find(edge => 
-      edge.from === fromNode.id && edge.to === toNode.id
+      (edge.from === fromNode.id && edge.to === toNode.id) ||
+      (this.question.type === EnumQuestionType.Distinction && 
+       edge.from === toNode.id && edge.to === fromNode.id)
     );
     
     if (!existingEdge) {
+      // For distinction questions, edges should be non-directional since relationships are symmetric
+      const isDirected = this.question.type !== EnumQuestionType.Distinction;
+      
       this.edges.push({
         from: fromNode.id,
         to: toNode.id,
-        directed: true
+        directed: isDirected
       });
       this.checkArrangement();
     }
@@ -981,10 +986,10 @@ export class GraphArrangementComponent implements AfterViewInit {
     this.ctx.moveTo(startX, startY);
     this.ctx.lineTo(endX, endY);
     
-    // For distinction questions, use red edges regardless of direction
+    // For distinction questions, use green edges (since they're non-directional/symmetric)
     // For other questions, use red for directed and green for undirected
     if (this.question.type === EnumQuestionType.Distinction) {
-      this.ctx.strokeStyle = '#f44336'; // Red for distinction questions
+      this.ctx.strokeStyle = '#4caf50'; // Green for distinction questions (symmetric relationships)
     } else {
       this.ctx.strokeStyle = edge.directed ? '#f44336' : '#4caf50'; // Red for directed, green for undirected
     }
@@ -992,7 +997,7 @@ export class GraphArrangementComponent implements AfterViewInit {
     this.ctx.lineWidth = 2;
     this.ctx.stroke();
     
-    // Draw arrow if directed
+    // Draw arrow if directed (distinction questions should not have arrows since they're symmetric)
     if (edge.directed) {
       this.drawArrow(endX, endY, Math.atan2(dy, dx));
     }

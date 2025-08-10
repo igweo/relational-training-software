@@ -9,6 +9,7 @@ import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
 import { LS_SPEECH_MODE, LS_VISUAL_MODE } from '../../constants/local-storage.constants';
+import { AnalyticsService } from '../../../shared/services/analytics.service';
 
 @Component({
     selector: 'app-game',
@@ -36,7 +37,8 @@ export class GameComponent {
         private statsService: StatsService,
         private router: Router,
         private speechService: SpeechService,
-        private visualService: VisualService
+        private visualService: VisualService,
+        private analyticsService: AnalyticsService
     ) {
         this.timerType = localStorage.getItem(LS_TIMER) || '0';
         this.gameMode = localStorage.getItem(LS_GAME_MODE) || '0';
@@ -45,6 +47,15 @@ export class GameComponent {
         if (this.sylSrv.question.conclusion === "!") {
             this.router.navigate([EnumScreens.Start]);
         }
+
+        // Track game start
+        this.analyticsService.trackGameEvent('question_started', {
+            question_type: this.sylSrv.question.type,
+            timer_type: this.timerType,
+            game_mode: this.gameMode,
+            has_visual_mode: localStorage.getItem(LS_VISUAL_MODE) === "true",
+            has_speech_mode: localStorage.getItem(LS_SPEECH_MODE) === "true"
+        });
     }
 
     ngOnInit() {
@@ -170,6 +181,12 @@ export class GameComponent {
     handleAnswer(answer: boolean) {
         this.userAnswer = answer;
         this.gameTimerService.stop();
+        
+        // Track answer selection
+        this.analyticsService.trackInteraction('answer_button', 'click', {
+            answer: answer,
+            question_type: this.sylSrv.question.type
+        });
         
         // For graph arrangement questions, show the graph modal
         if (this.shouldShowGraphArrangement()) {
