@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NOT_STRINGS, NOUNS, STRINGS } from '../constants/question.constants';
+import { GlyphGeneratorService, GlyphOptions } from './glyph-generator.service';
 
 @Injectable({
     providedIn: 'root',
@@ -69,19 +70,29 @@ export class VisualService {
         'none': '∅'
     };
 
-    constructor() {
+    constructor(private glyphGenerator: GlyphGeneratorService) {
         this.initializeSymbolMaps();
     }
 
     private initializeSymbolMaps() {
-        // Create consistent mappings for nouns and strings
-        const allWords = [...NOUNS, ...STRINGS];
-        const visualSymbols = [...NOT_STRINGS];
+        // Create consistent mappings for nouns and strings using glyph generator
+        const allWords = [...NOUNS, ...STRINGS, ...NOT_STRINGS];
         
-        // Ensure we have enough visual symbols by cycling through them if needed
-        allWords.forEach((word, index) => {
-            const symbolIndex = index % visualSymbols.length;
-            this.visualSymbolMap.set(word.toLowerCase(), visualSymbols[symbolIndex]);
+        // Generate unique glyphs for each word/symbol using the word as seed
+        allWords.forEach((word) => {
+            const glyphOptions: GlyphOptions = {
+                size: 24, // Small size for inline use
+                strokeWidth: 1.5,
+                fg: 'currentColor',
+                complexity: 4, // Medium complexity
+                symmetry: 'radial',
+                seed: word // Use the word itself as seed for consistency
+            };
+            
+            const glyphDataURL = this.glyphGenerator.generateGlyphDataURL(word, glyphOptions);
+            const glyphImg = `<img src="${glyphDataURL}" alt="${word}" style="display: inline-block; width: 1.2em; height: 1.2em; vertical-align: middle;" />`;
+            
+            this.visualSymbolMap.set(word.toLowerCase(), glyphImg);
         });
     }
 
@@ -90,9 +101,12 @@ export class VisualService {
 
         let transformedText = text;
 
-        // Transform subjects within span tags
+        // Handle potential HTML entity issues by normalizing quotes first
+        transformedText = transformedText.replace(/&quot;/g, '"');
+        
+        // More robust regex pattern for subject spans
         transformedText = transformedText.replace(
-            /<span class="subject">(.*?)<\/span>/g, 
+            /<span\s+class=["']subject["'][^>]*>(.*?)<\/span>/gi, 
             (match, subject) => {
                 const visualSymbol = this.getVisualSymbol(subject);
                 return `<span class="subject">${visualSymbol}</span>`;
@@ -148,10 +162,19 @@ export class VisualService {
         let transformedText = text;
 
         // Transform any remaining nouns/strings that aren't in spans
-        const allWords = [...NOUNS, ...STRINGS];
+        const allWords = [...NOUNS, ...STRINGS, ...NOT_STRINGS];
         
         for (const word of allWords) {
-            const regex = new RegExp(`\\b${word}\\b(?![^<]*</span>)`, 'gi');
+            // For emoji/special characters in NOT_STRINGS, we need to escape them for regex
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
+            // For regular words, use word boundaries. For emojis/symbols, just match directly
+            const useWordBoundaries = /^[a-zA-Z]+$/.test(word);
+            const regexPattern = useWordBoundaries 
+                ? `\\b${escapedWord}\\b(?![^<]*</span>)`
+                : `${escapedWord}(?![^<]*</span>)`;
+            
+            const regex = new RegExp(regexPattern, 'gi');
             transformedText = transformedText.replace(regex, (match) => {
                 return this.getVisualSymbol(match);
             });

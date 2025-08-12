@@ -8,7 +8,7 @@ import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE } from '../../constants/local-storage.constants';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 
 @Component({
@@ -430,7 +430,15 @@ export class GameComponent {
     }
 
     shouldShowGraphArrangement(): boolean {
-        // Show graph arrangement for certain question types
+        // Check if graph arrangement mode is enabled
+        const graphArrangementEnabled = localStorage.getItem(LS_GRAPH_ARRANGEMENT_MODE);
+        
+        // If explicitly disabled, don't show graph arrangement
+        if (graphArrangementEnabled === "false") {
+            return false;
+        }
+        
+        // Default is enabled (true), so check for compatible question types
         const graphQuestionTypes = [
             'Distinction',
             'Direction',

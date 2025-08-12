@@ -42,6 +42,7 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/graph-matching.component';
 import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
 import { GraphArrangementComponent } from './components/graph-arrangement/graph-arrangement.component';
+import { GlyphComponent } from './components/glyph/glyph.component';
 
 const routes: Routes = [
     {
@@ -121,6 +122,7 @@ const routes: Routes = [
         TiersMatrixComponent,
         SettingsComponent,
         GraphArrangementComponent,
+        GlyphComponent,
     ],
     imports: [
         CommonModule,

@@ -160,6 +160,26 @@
                 </div>
             </div>
         </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header py-2 small">Graph arrangement settings</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="graphArrangementMode"
+                        [formControl]="graphArrangementMode"
+                    >
+                    <label class="form-check-label" for="graphArrangementMode">
+                        Enable graph arrangement functionality
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">
+                    Allows interactive graph construction for spatial reasoning questions
+                </div>
+            </div>
+        </div>
     </div>
 
     <div footer class="playcard-toolbar">

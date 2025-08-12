@@ -110,6 +110,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     audioMode: true,
     speechMode: false,
     visualMode: false,
+    graphArrangementMode: true,
     binary: {
         and: true,
         nand: true,
