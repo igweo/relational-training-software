@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, AfterViewInit, Output, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { Question } from '../../models/question.models';
 import { EnumQuestionType } from '../../constants/question.constants';
+import { expressionVariants } from '../../utils/question.utils';
 
 export interface GraphNode {
   id: string;
@@ -411,8 +412,13 @@ export class GraphArrangementComponent implements AfterViewInit {
     return edges;
   }
 
+  private getRelationalConnectorPositive(premise: string, positiveConnectors: string[]): boolean {
+    return positiveConnectors.some((c) => premise.includes(c))
+  }
+
   private getComparisonEdges(): GraphEdge[] {
     const edges: GraphEdge[] = [];
+    const comparisonConnectorsPositive = expressionVariants.ComparisonChronological.positive.concat(expressionVariants.ComparisonNumerical.positive)
     
     // For comparison questions, create directed edges based on the ordering
     // Parse premises to determine relationships
@@ -422,9 +428,8 @@ export class GraphArrangementComponent implements AfterViewInit {
         const [obj1, obj2] = objects;
         
         // Determine direction based on relationship words
-        const isGreaterOrAfter = premise.includes('greater') || premise.includes('larger') || 
-                               premise.includes('higher') || premise.includes('after') || 
-                               premise.includes('later') || premise.includes('superior');
+
+        const isGreaterOrAfter = this.getRelationalConnectorPositive(premise, comparisonConnectorsPositive)
         
         if (isGreaterOrAfter) {
           edges.push({ from: obj1, to: obj2, directed: true });
@@ -494,10 +499,7 @@ export class GraphArrangementComponent implements AfterViewInit {
       
       if (objects.length >= 2) {
         // Check if the premise indicates similarity/sameness
-        const isSimilarityPremise = premise.includes('same') || premise.includes('identical') || 
-                                   premise.includes('equivalent') || premise.includes('similar') ||
-                                   !premise.includes('different') && !premise.includes('distinct');
-        
+        const isSimilarityPremise = this.getRelationalConnectorPositive(premise, expressionVariants.Direction.positive)
         if (isSimilarityPremise) {
           // Group these objects together
           const groupKey = objects.sort().join(',');
@@ -677,7 +679,7 @@ export class GraphArrangementComponent implements AfterViewInit {
     const existingEdge = this.edges.find(edge => 
       (edge.from === fromNode.id && edge.to === toNode.id) ||
       (this.question.type === EnumQuestionType.Distinction && 
-       edge.from === toNode.id && edge.to === fromNode.id)
+       edge.from === toNode.id || edge.to === fromNode.id)
     );
     
     if (!existingEdge) {

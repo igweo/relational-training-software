@@ -150,7 +150,7 @@ export function getMetaReplacer(settings: Settings, choosenPair: Picked<string>,
 
     return `$1 ${relation} (<span class="subject">${a}</span> to <span class="subject">${b}</span>) to `;
 }
-const expressionVariants = {
+export const expressionVariants = {
   Distinction: {
       /* "Same / not‑same" – identity and equivalence relationships */
       positive: [
