@@ -30,6 +30,11 @@ export class GameComponent {
     userAnswer: boolean | undefined = undefined;
     graphArrangementComplete = false;
     graphArrangementData: any = null;
+    
+    // Visual mode state
+    get isVisualModeEnabled(): boolean {
+        return localStorage.getItem(LS_VISUAL_MODE) === "true";
+    }
 
     constructor(
         public sylSrv: SyllogimousService,
@@ -62,39 +67,6 @@ export class GameComponent {
         let questionPremises = this.sylSrv.question.premises;
         let conclusion = this.sylSrv.question.conclusion;
         const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion];
-        
-        // Check if visual mode is enabled and transform content
-        const visualModeEnabled = localStorage.getItem(LS_VISUAL_MODE) === "true";
-        if (visualModeEnabled) {
-            // Transform premises to visual symbols
-            questionPremises = questionPremises.map(premise => 
-                this.visualService.transformToVisual(premise)
-            );
-            
-            // Transform conclusion(s) to visual symbols
-            if (Array.isArray(conclusion)) {
-                conclusion = conclusion.map(c => this.visualService.transformToVisual(c));
-            } else {
-                conclusion = this.visualService.transformToVisual(conclusion);
-            }
-            
-            // Update the service with transformed content
-            this.sylSrv.question.premises = questionPremises;
-            this.sylSrv.question.conclusion = conclusion;
-            
-            // Transform instructions and notes if they exist
-            if (this.sylSrv.question.instructions) {
-                this.sylSrv.question.instructions = this.sylSrv.question.instructions.map(instruction =>
-                    this.visualService.transformToVisual(instruction)
-                );
-            }
-            
-            if (this.sylSrv.question.notes) {
-                this.sylSrv.question.notes = this.sylSrv.question.notes.map(note =>
-                    this.visualService.transformToVisual(note)
-                );
-            }
-        }
         
         // Check if speech mode is enabled before using text-to-speech
         const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";

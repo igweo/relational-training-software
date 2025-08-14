@@ -1,0 +1,70 @@
+/* Glyph symbol styling */
+.glyph-symbol {
+  display: inline-block !important;
+  width: 1.2em !important;
+  height: 1.2em !important;
+  vertical-align: middle !important;
+  margin: 0 2px !important;
+  
+  /* Ensure the glyph doesn't break layout */
+  flex-shrink: 0;
+  
+  /* Smooth rendering */
+  image-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure glyphs work well in different contexts */
+.premises .glyph-symbol,
+.conclusions .glyph-symbol,
+.instructions .glyph-symbol,
+.notes .glyph-symbol {
+  margin: 0 1px;
+}
+
+/* Ensure glyphs are not too large in smaller text contexts */
+.small .glyph-symbol,
+.text-small .glyph-symbol {
+  width: 1em !important;
+  height: 1em !important;
+}
+
+/* Prevent glyphs from being selected as text */
+.glyph-symbol {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Ensure glyphs work in dark mode */
+@media (prefers-color-scheme: dark) {
+  .glyph-symbol {
+    opacity: 0.9;
+  }
+}
+
+/* Ensure proper spacing in subject spans */
+span.subject .glyph-symbol {
+  margin: 0 1px;
+  vertical-align: baseline;
+}
+
+/* Handle RTL layouts */
+[dir="rtl"] .glyph-symbol {
+  transform: scaleX(-1);
+}
+
+/* Animation for when glyphs load */
+.glyph-symbol {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.glyph-symbol:not([src]) {
+  opacity: 0;
+}
+
+.glyph-symbol[src] {
+  opacity: 1;
+}

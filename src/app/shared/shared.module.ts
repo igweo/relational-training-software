@@ -21,6 +21,7 @@ import { LetDirective } from './directives/ng-let';
 import { MaskedInputDirective } from './directives/text2mask';
 import { AppSortableHeader } from './directives/sortable-header';
 import { HackCasePipe } from './pipes/hack-case.pipe';
+import { VisualTransformPipe } from './pipes/visual-transform.pipe';
 import { HighlightDirective } from './directives/highlight';
 import { ToastsContainer } from './components/toasts-container/toasts-container.component';
 import { DynamicFormComponent } from './components/dynamic-form/dynamic-form.component';
@@ -48,6 +49,7 @@ import { DynamicFormComponent } from './components/dynamic-form/dynamic-form.com
         HighlightDirective,
         // Pipes
         HackCasePipe,
+        VisualTransformPipe,
     ],
     imports: [
         CommonModule,
@@ -90,6 +92,7 @@ import { DynamicFormComponent } from './components/dynamic-form/dynamic-form.com
         HighlightDirective,
         // Pipes
         HackCasePipe,
+        VisualTransformPipe,
     ]
 })
 export class SharedModule { }

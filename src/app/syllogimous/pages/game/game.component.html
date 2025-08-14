@@ -1,16 +1,16 @@
 <ng-template #questionInstructionsAndNotes>
     <ng-container *ngIf="{ instructions: sylSrv.question.instructions, notes: sylSrv.question.notes } as info">
         <div *ngIf="info.instructions?.length || info.notes?.length">
-            <div *ngIf="info.instructions?.length">
-                <div class="small text-muted">Instructions</div>
-                <div class="instructions">
-                    <div *ngFor="let instruction of info.instructions" [innerHTML]="instruction"></div>
-                </div>
-            </div>
-    
-            <div *ngIf="info.notes?.length" class="notes">
-                <div *ngFor="let note of info.notes" [innerHTML]="note"></div>
-            </div>
+                        <div *ngIf="info.instructions?.length">
+                            <div class="small text-muted">Instructions</div>
+                            <div class="instructions">
+                                <div *ngFor="let instruction of info.instructions" [innerHTML]="instruction | visualTransform:isVisualModeEnabled"></div>
+                            </div>
+                        </div>
+                
+                        <div *ngIf="info.notes?.length" class="notes">
+                            <div *ngFor="let note of info.notes" [innerHTML]="note | visualTransform:isVisualModeEnabled"></div>
+                        </div>
         </div>
     </ng-container>
 </ng-template>
@@ -41,7 +41,7 @@
                     <div style="display: grid; place-items: center;">
                         <div>
                             <small class="text-muted">{{last ? "Last premise" : "Premise " + (i + 1)}}</small>
-                            <div [innerHTML]="p"></div>
+                            <div [innerHTML]="p | visualTransform:isVisualModeEnabled"></div>
                         </div>
                     </div>
                 </ng-template>
@@ -51,7 +51,7 @@
                         <div style="display: grid; place-items: center;">
                             <div>
                                 <small class="text-muted">{{last ? "Last conclusion" : "Conclusion " + (i + 1)}}</small>
-                                <div [innerHTML]="c"></div>
+                                <div [innerHTML]="c | visualTransform:isVisualModeEnabled"></div>
                             </div>
                         </div>
                     </ng-template>
@@ -61,7 +61,7 @@
                         <div style="display: grid; place-items: center;">
                             <div>
                                 <small class="text-muted">Conclusion</small>
-                                <div [innerHTML]="sylSrv.question.conclusion"></div>
+                                <div [innerHTML]="sylSrv.question.conclusion | visualTransform:isVisualModeEnabled"></div>
                             </div>
                         </div>
                     </ng-template>
@@ -117,20 +117,20 @@
                 <div>
                     <div class="small text-muted">Premises</div>
                     <div class="premises" *ngIf="sylSrv.question.premises as premises">
-                        <div *ngFor="let p of premises" [innerHTML]="p"></div>
+                        <div *ngFor="let p of premises" [innerHTML]="p | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </div>
 
                 <div *ngIf="Array.isArray(sylSrv.question.conclusion); else conclusionIsStringTemplate">
                     <div class="small text-muted">Conclusion</div>
                     <div class="conclusions" *ngIf="sylSrv.question.conclusion as conclusions">
-                        <div *ngFor="let c of conclusions" [innerHTML]="c"></div>
+                        <div *ngFor="let c of conclusions" [innerHTML]="c | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </div>
                 <ng-template #conclusionIsStringTemplate>
                     <div>
                         <div class="small text-muted">Conclusion</div>
-                        <div [innerHTML]="sylSrv.question.conclusion"></div>
+                        <div [innerHTML]="sylSrv.question.conclusion | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </ng-template>
             </ng-template>

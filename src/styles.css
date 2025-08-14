@@ -1,3 +1,6 @@
+/* Import custom styles for glyph symbols */
+@import url('assets/css/custom-styles/glyph-symbols.css');
+
 /* Start of VARIABLES */
 :root {
     --border-radius_sm: calc(var(--border-radius_md) * 0.2 / 0.25);
