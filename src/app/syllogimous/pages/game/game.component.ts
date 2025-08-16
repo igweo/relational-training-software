@@ -63,6 +63,10 @@ export class GameComponent {
         });
     }
 
+    get glyphs() {
+        return this.sylSrv.question.glyphs || [];
+    }
+
     ngOnInit() {
         let questionPremises = this.sylSrv.question.premises;
         let conclusion = this.sylSrv.question.conclusion;

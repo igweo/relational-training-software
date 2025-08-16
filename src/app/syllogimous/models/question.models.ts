@@ -29,6 +29,20 @@ export interface IDirection3DProposition {
     uid: string;
 }
 
+export interface IGlyph {
+    id: string;
+    svgPath: string;
+    color: string;
+    relationType?: string; // e.g. Distinction, ComparisonNumerical, ComparisonChronological
+    isPositive?: boolean;  // true for positive relation, false for negative
+    steps?: number;        // number of steps for relations that use it
+
+    // New visual transform options
+    rotation?: number;
+    scale?: number;
+    filter?: string;
+}
+
 export class Question {
     instructions?: string[];
     notes?: string[];
@@ -58,6 +72,9 @@ export class Question {
     missingPosition?: { row: number; col: number };
     options?: string[];
     correctAnswer?: string;
+
+    // New glyphs array for visual relation encoding
+    glyphs?: import("./question.models").IGlyph[];
 
     constructor(type: EnumQuestionType) {
         this.type = type;
