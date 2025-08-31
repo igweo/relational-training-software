@@ -2,7 +2,6 @@
     <ng-container *ngIf="{ instructions: sylSrv.question.instructions, notes: sylSrv.question.notes } as info">
         <div *ngIf="info.instructions?.length || info.notes?.length">
                         <div *ngIf="info.instructions?.length">
-                            <div class="small text-muted">Instructions</div>
                             <div class="instructions">
                                 <div *ngFor="let instruction of info.instructions" [innerHTML]="instruction | visualTransform:isVisualModeEnabled"></div>
                             </div>
@@ -23,7 +22,7 @@
             </ngb-progressbar>
         </div>
 
-        <div [class.d-none]="gameMode !== '1'">
+        <div [class.d-none]="gameMode !== '1' || entityAudioMode">
             <ngb-carousel
                 #carousel
                 [interval]="999999999"
@@ -31,7 +30,7 @@
                 [showNavigationIndicators]="false"
                 style="border: 0; box-shadow: none;"
             >
-                <ng-template ngbSlide *ngIf="sylSrv.question.instructions?.length || sylSrv.question.notes?.length">
+                <ng-template ngbSlide *ngIf="(sylSrv.question.instructions?.length || sylSrv.question.notes?.length) && !hideInstructionsEnabled">
                     <div style="display: grid; place-items: center;">
                         <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
                     </div>
@@ -74,8 +73,10 @@
             </div>
         </div>
         
-        <div class="d-grid gap-4" [class.d-none]="gameMode === '1'">
-            <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
+        <div class="d-grid gap-4" [class.d-none]="gameMode === '1' && !entityAudioMode">
+            <ng-container *ngIf="!hideInstructionsEnabled">
+                <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
+            </ng-container>
 
             <!-- Matrix Reasoning Question Display -->
             <div *ngIf="sylSrv.question.type === 'Matrix Reasoning'; else regularQuestionTemplate">
@@ -114,21 +115,24 @@
             <!-- Regular Question Template -->
             <ng-template #regularQuestionTemplate>
                 <!-- Always show question content first -->
-                <div>
+                <div *ngIf="!entityAudioMode; else entityOnlyPremisesBlock">
                     <div class="small text-muted">Premises</div>
                     <div class="premises" *ngIf="sylSrv.question.premises as premises">
                         <div *ngFor="let p of premises" [innerHTML]="p | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </div>
+                <ng-template #entityOnlyPremisesBlock>
+                    <!-- In entity audio mode we only show instructions (entities list) above -->
+                </ng-template>
 
-                <div *ngIf="Array.isArray(sylSrv.question.conclusion); else conclusionIsStringTemplate">
+                <div *ngIf="!entityAudioMode && Array.isArray(sylSrv.question.conclusion); else conclusionIsStringTemplate">
                     <div class="small text-muted">Conclusion</div>
                     <div class="conclusions" *ngIf="sylSrv.question.conclusion as conclusions">
                         <div *ngFor="let c of conclusions" [innerHTML]="c | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </div>
                 <ng-template #conclusionIsStringTemplate>
-                    <div>
+                    <div *ngIf="!entityAudioMode">
                         <div class="small text-muted">Conclusion</div>
                         <div [innerHTML]="sylSrv.question.conclusion | visualTransform:isVisualModeEnabled"></div>
                     </div>

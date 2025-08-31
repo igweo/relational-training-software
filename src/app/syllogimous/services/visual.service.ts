@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NOT_STRINGS, NOUNS, STRINGS } from '../constants/question.constants';
 import { GlyphGeneratorService, GlyphOptions } from './glyph-generator.service';
+import { Question } from '../models/question.models';
 
 @Injectable({
     providedIn: 'root',
@@ -185,5 +186,26 @@ export class VisualService {
 
     extractWordsWithNegation(inputArray: string[]): string[] {
         return inputArray.map(item => this.transformToVisual(item));
+    }
+
+    // Build compact Entities list (entity 1..N) for audio-mode UI
+    buildEntitiesList(question: Question, useGlyphs: boolean = true): { order: string[], html: string } {
+        const collect = (txt: string) => [...txt.matchAll(/<span class="subject">(.*?)<\/span>/g)].map(m => m[1]);
+        const allText = [...question.premises, ...(Array.isArray(question.conclusion) ? question.conclusion : [question.conclusion])].join(' ');
+        const seen = new Set<string>();
+        const order: string[] = [];
+        for (const s of collect(allText)) {
+            if (!seen.has(s)) { seen.add(s); order.push(s); }
+        }
+        const li = order.map((s, i) => {
+            const subjectHtml = useGlyphs ? this.getVisualSymbol(s) : s;
+            return `<li><span class="subject">${subjectHtml}</span> <span class="ms-1 text-muted">(entity ${i+1})</span></li>`;
+        }).join('');
+        const entitiesHtml = `<ol class="mb-2">${li}</ol>`;
+
+        // In entity audio mode, we show only the entities during narration.
+        // Conclusion will be shown after narration completes by the component.
+        const html = `${entitiesHtml}`;
+        return { order, html };
     }
 }

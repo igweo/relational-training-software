@@ -16,6 +16,7 @@ export enum EnumQuestionType {
 }
 
 export enum EnumArrangements {
+    // Basic relationships (existing)
     AdjacentLeft = "is adjacent and left of",
     AdjacentRight = "is adjacent and right of",
     Next = "is next to",
@@ -24,6 +25,148 @@ export enum EnumArrangements {
     Left = "is at the left of",
     Right = "is at the right of",
     InFront = "is diametrically opposite to", // not used by linear
+    
+    // Enhanced linear relationships - Positional
+    Precedes = "precedes",
+    Follows = "follows",
+    ComesBefore = "comes before",
+    ComesAfter = "comes after",
+    IsPrecededBy = "is preceded by",
+    IsFollowedBy = "is followed by",
+    Leads = "leads",
+    Trails = "trails",
+    Heads = "heads",
+    Tails = "tails",
+    
+    // Enhanced linear relationships - Distance-based
+    IsDistantFrom = "is distant from",
+    IsCloseTo = "is close to",
+    IsNearTo = "is near to",
+    IsFarFrom = "is far from",
+    IsSeparatedFrom = "is separated from",
+    IsIsolatedFrom = "is isolated from",
+    IsGroupedWith = "is grouped with",
+    IsClusteredWith = "is clustered with",
+    
+    // Enhanced linear relationships - Directional with variety
+    IsPositionedLeftOf = "is positioned left of",
+    IsPositionedRightOf = "is positioned right of",
+    IsSituatedLeftOf = "is situated left of",
+    IsSituatedRightOf = "is situated right of",
+    IsLocatedLeftOf = "is located left of",
+    IsLocatedRightOf = "is located right of",
+    IsPlacedLeftOf = "is placed left of",
+    IsPlacedRightOf = "is placed right of",
+    IsSetLeftOf = "is set left of",
+    IsSetRightOf = "is set right of",
+    
+    // Enhanced linear relationships - Sequential
+    IsInSequenceWith = "is in sequence with",
+    IsOrderedWith = "is ordered with",
+    IsArrangedWith = "is arranged with",
+    IsOrganizedWith = "is organized with",
+    IsStructuredWith = "is structured with",
+    IsSystematizedWith = "is systematized with",
+    
+    // Enhanced linear relationships - Relative positioning
+    IsAheadOf = "is ahead of",
+    IsBehind = "is behind",
+    IsInFrontOf = "is in front of",
+    IsInBackOf = "is in back of",
+    IsForwardOf = "is forward of",
+    IsBackwardOf = "is backward of",
+    IsUpstreamFrom = "is upstream from",
+    IsDownstreamFrom = "is downstream from",
+    
+    // Enhanced linear relationships - Spatial relationships
+    IsAdjacentTo = "is adjacent to",
+    IsContiguousWith = "is contiguous with",
+    IsConnectedTo = "is connected to",
+    IsLinkedTo = "is linked to",
+    IsJoinedTo = "is joined to",
+    IsAttachedTo = "is attached to",
+    IsBondedTo = "is bonded to",
+    IsFusedTo = "is fused to",
+    
+    // Enhanced linear relationships - Comparative positioning
+    IsCloserToStartThan = "is closer to the start than",
+    IsFurtherFromStartThan = "is further from the start than",
+    IsNearerToStartThan = "is nearer to the start than",
+    IsMoreDistantFromStartThan = "is more distant from the start than",
+    IsCloserToEndThan = "is closer to the end than",
+    IsFurtherFromEndThan = "is further from the end than",
+    IsNearerToEndThan = "is nearer to the end than",
+    IsMoreDistantFromEndThan = "is more distant from the end than",
+    
+    // Enhanced linear relationships - Complex positioning
+    IsSandwichedBetween = "is sandwiched between",
+    IsBracketedBy = "is bracketed by",
+    IsFramedBy = "is framed by",
+    IsSurroundedBy = "is surrounded by",
+    IsEncircledBy = "is encircled by",
+    IsEnclosedBy = "is enclosed by",
+    IsContainedBy = "is contained by",
+    IsBoundedBy = "is bounded by",
+    
+    // Enhanced linear relationships - Movement/Flow
+    IsUpstreamOf = "is upstream of",
+    IsDownstreamOf = "is downstream of",
+    IsAboveInFlow = "is above in the flow",
+    IsBelowInFlow = "is below in the flow",
+    IsHigherInSequence = "is higher in the sequence",
+    IsLowerInSequence = "is lower in the sequence",
+    IsSuperiorInOrder = "is superior in order",
+    IsInferiorInOrder = "is inferior in order",
+    
+    // Enhanced linear relationships - Temporal/Logical
+    IsPriorTo = "is prior to",
+    IsSubsequentTo = "is subsequent to",
+    IsAntecedentTo = "is antecedent to",
+    IsConsequentTo = "is consequent to",
+    IsPreparatoryTo = "is preparatory to",
+    IsPreliminaryTo = "is preliminary to",
+    IsIntroductoryTo = "is introductory to",
+    IsConclusiveTo = "is conclusive to",
+    
+    // Enhanced linear relationships - Hierarchical
+    IsDominantOver = "is dominant over",
+    IsSubordinateTo = "is subordinate to",
+    IsSuperiorTo = "is superior to",
+    IsInferiorTo = "is inferior to",
+    IsPrimaryTo = "is primary to",
+    IsSecondaryTo = "is secondary to",
+    IsTertiaryTo = "is tertiary to",
+    IsAncillaryTo = "is ancillary to",
+    
+    // Enhanced linear relationships - Functional
+    IsPrerequisiteTo = "is prerequisite to",
+    IsDependentOn = "is dependent on",
+    IsIndependentOf = "is independent of",
+    IsCorrelatedWith = "is correlated with",
+    IsAssociatedWith = "is associated with",
+    IsRelatedTo = "is related to",
+    IsConnectedWith = "is connected with",
+    IsIntegratedWith = "is integrated with",
+    
+    // Enhanced linear relationships - Spatial with precision
+    IsPositionedAt = "is positioned at",
+    IsSituatedAt = "is situated at",
+    IsLocatedAt = "is located at",
+    IsPlacedAt = "is placed at",
+    IsSetAt = "is set at",
+    IsArrangedAt = "is arranged at",
+    IsOrganizedAt = "is organized at",
+    IsStructuredAt = "is structured at",
+    
+    // Enhanced linear relationships - Relative distance
+    IsWithinReachOf = "is within reach of",
+    IsBeyondReachOf = "is beyond reach of",
+    IsAccessibleTo = "is accessible to",
+    IsInaccessibleTo = "is inaccessible to",
+    IsReachableFrom = "is reachable from",
+    IsUnreachableFrom = "is unreachable from",
+    IsAttainableFrom = "is attainable from",
+    IsUnattainableFrom = "is unattainable from"
 };
 
 export const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];

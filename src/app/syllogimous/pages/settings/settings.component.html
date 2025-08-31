@@ -138,6 +138,17 @@
                         Enable speech mode (text-to-speech)
                     </label>
                 </div>
+                <div class="form-check mt-2">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="hideInstructions"
+                        [formControl]="hideInstructions"
+                    >
+                    <label class="form-check-label" for="hideInstructions">
+                        Skip instructions pages between questions
+                    </label>
+                </div>
             </div>
         </div>
 

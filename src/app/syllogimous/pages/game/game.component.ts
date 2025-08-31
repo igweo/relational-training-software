@@ -9,6 +9,7 @@ import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
 import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE } from '../../constants/local-storage.constants';
+import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 
 @Component({
@@ -30,6 +31,11 @@ export class GameComponent {
     userAnswer: boolean | undefined = undefined;
     graphArrangementComplete = false;
     graphArrangementData: any = null;
+    // Entity-only audio visualization mode
+    entityAudioMode = false;
+    get hideInstructionsEnabled(): boolean {
+        return localStorage.getItem(LS_HIDE_INSTRUCTIONS) === 'true';
+    }
     
     // Visual mode state
     get isVisualModeEnabled(): boolean {
@@ -75,16 +81,27 @@ export class GameComponent {
         // Check if speech mode is enabled before using text-to-speech
         const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";
         if (speechModeEnabled) {
-            // Add voicelines to speech queue
-            this.speechService.extractWordsWithNegation(
-                questionPremises
-                    .concat(["Conclusion"])
-                    .concat(conclusionFormatted)
-                    .concat(["True or false?"])
-            ).forEach(
-                (voiceLine: string) => {
-                    this.speechService.speak(voiceLine)
-                })
+            // Enable entity-only audio visualization mode
+            this.entityAudioMode = true;
+            if (!this.hideInstructionsEnabled) {
+                const { html } = this.visualService.buildEntitiesList(this.sylSrv.question, this.isVisualModeEnabled);
+                this.sylSrv.question.instructions = [
+                    `<div class="small text-muted">Entities</div>${html}`
+                ];
+            } else {
+                this.sylSrv.question.instructions = [];
+            }
+            // Speak premises and conclusion using entity indices (skip preface)
+            this.speechService.speakQuestionAsEntities(this.sylSrv.question, 'en-US', false).then(() => {
+                if (!this.hideInstructionsEnabled) {
+                    const conclusionHtml = Array.isArray(this.sylSrv.question.conclusion)
+                        ? `<div class="small text-muted">Conclusion</div><div>${this.sylSrv.question.conclusion.map(c => `<div>${c}</div>`).join('')}</div>`
+                        : `<div class="small text-muted">Conclusion</div><div>${this.sylSrv.question.conclusion}</div>`;
+                    this.sylSrv.question.instructions = [conclusionHtml];
+                } else {
+                    this.sylSrv.question.instructions = [];
+                }
+            });
         }
         switch (this.timerType) {
             case '1': {

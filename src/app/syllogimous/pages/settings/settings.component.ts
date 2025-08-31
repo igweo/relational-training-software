@@ -6,6 +6,7 @@ import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_U
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
 import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE } from '../../constants/local-storage.constants';
+import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { EnumQuestionType } from '../../constants/question.constants';
 import { areSettingsInvalid, Settings } from '../../models/settings.models';
 
@@ -28,6 +29,7 @@ export class SettingsComponent {
     speechMode = new FormControl(false);
     visualMode = new FormControl(false);
     graphArrangementMode = new FormControl(true);
+    hideInstructions = new FormControl(false);
 
     constructor(
         public router: Router,
@@ -77,6 +79,12 @@ export class SettingsComponent {
         this.graphArrangementMode.setValue(graphArrangementModeStored === null ? true : graphArrangementModeStored === "true");
         this.graphArrangementMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_GRAPH_ARRANGEMENT_MODE, String(v)));
+
+        // Hide instructions page flag
+        const hideInstructionsStored = localStorage.getItem(LS_HIDE_INSTRUCTIONS);
+        this.hideInstructions.setValue(hideInstructionsStored === null ? false : hideInstructionsStored === "true");
+        this.hideInstructions.valueChanges
+            .subscribe(v => localStorage.setItem(LS_HIDE_INSTRUCTIONS, String(v)));
     }
 
     getQuestionTypes(): EnumQuestionType[] {

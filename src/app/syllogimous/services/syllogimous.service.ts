@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Question } from "../models/question.models";
-import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion } from "../utils/question.utils";
+import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
 import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER } from "../constants/local-storage.constants";
@@ -480,7 +480,7 @@ export class SyllogimousService {
                     modalRef.componentInstance.content = "Your hard work is paying off.<br>Keep going to unlock more question types and points!";
                 } else if (ds < 0) {
                     modalRef.componentInstance.title = "Level Down";
-                    modalRef.componentInstance.content = "Take this as a learning step.<br>Refocus your efforts and you’ll be back on top in no time!";
+                    modalRef.componentInstance.content = "Take this as a learning step.<br>Refocus your efforts and you'll be back on top in no time!";
                 }
             }
         }
@@ -571,8 +571,19 @@ export class SyllogimousService {
 
                     const isSameAs = coinFlip();
                     const relation = getRelation(settings, type, isSameAs);
-
-                    question.premises.push(`<span class="subject">${prev}</span> is ${relation} <span class="subject">${curr}</span>`);
+                    
+                    // Use formatRelation to determine the proper format
+                    const { needsCopula, formattedRelation } = formatRelation(relation);
+                    const copula = needsCopula ? "is" : "";
+                    // Randomly flip direction (A->B vs B->A) for variety
+                    const flipDir = coinFlip();
+                    const left = flipDir ? curr : prev;
+                    const right = flipDir ? prev : curr;
+                    const premise = copula 
+                        ? `<span class="subject">${left}</span> ${copula} ${formattedRelation} <span class="subject">${right}</span>`
+                        : `<span class="subject">${left}</span> ${formattedRelation} <span class="subject">${right}</span>`;
+                    
+                    question.premises.push(premise);
 
                     if (!isSameAs) {
                         prevBucket = (prevBucket + 1) % 2;
@@ -961,14 +972,26 @@ export class SyllogimousService {
         };
 
         const stringifyProposition = (p: IDirectionProposition) => {
-            const relationship = settings.enabled.negation ? negateRelationship(p.relationship) : p.relationship;
-            return `<span class="subject">${p.pair[0][0]}</span> is ${relationship} of <span class="subject">${p.pair[1][0]}</span>`;
+            const relationshipRaw = settings.enabled.negation ? negateRelationship(p.relationship) : p.relationship;
+            const invert = coinFlip();
+            if (!invert) {
+                return `<span class="subject">${p.pair[0][0]}</span> is ${relationshipRaw} of <span class="subject">${p.pair[1][0]}</span>`;
+            }
+            const swap = (w: string) => ({ North: 'South', South: 'North', East: 'West', West: 'East', north: 'south', south: 'north', east: 'west', west: 'east' } as Record<string, string>)[w] || w;
+            const invertedRel = relationshipRaw.replaceAll(/North|South|East|West|north|south|east|west/g, swap);
+            return `<span class="subject">${p.pair[1][0]}</span> is ${invertedRel} of <span class="subject">${p.pair[0][0]}</span>`;
         };
 
         shuffle(premises);
         question.isValid = isValid;
         question.premises = premises.map(stringifyProposition);
-        question.conclusion = stringifyProposition(conclusion);
+        if (coinFlip() && premises.length) {
+            const premiseToRepeat = pickUniqueItems(premises, 1).picked[0];
+            question.isValid = true;
+            question.conclusion = stringifyProposition(premiseToRepeat);
+        } else {
+            question.conclusion = stringifyProposition(conclusion);
+        }
 
         // TODO: Create meta relationship
 
@@ -1243,7 +1266,13 @@ export class SyllogimousService {
         shuffle(premises);
         question.isValid = isValid;
         question.premises = premises.map(stringifyProposition);
-        question.conclusion = stringifyProposition(conclusion);
+        if (coinFlip() && premises.length) {
+            const premiseToRepeat = pickUniqueItems(premises, 1).picked[0];
+            question.isValid = true;
+            question.conclusion = stringifyProposition(premiseToRepeat);
+        } else {
+            question.conclusion = stringifyProposition(conclusion);
+        }
 
         // TODO: Create meta relationship
 

@@ -1,4 +1,5 @@
 import { FORMS, NOUNS, NUMBER_WORDS, STRINGS, VALID_RULES, NOT_STRINGS } from "../constants/question.constants";
+import { pickKeyForType, renderRelation } from "../constants/relations.constants";
 import { EnumArrangements, EnumQuestionType } from "../constants/question.constants";
 import { IArrangementPremise, IArrangementRelationship, Question } from "../models/question.models";
 import { Settings, Picked } from "../models/settings.models";
@@ -598,6 +599,23 @@ export function diversifyComparisonConclusion(
                 isValid: isMoreOrAfter === actualMore
             };
         }
+        
+        case ConclusionDiversificationStrategy.PREMISE_RESTATEMENT: {
+            // Restate a true adjacent premise to test attention
+            if (orderedElements.length >= 2) {
+                const startIdx = Math.floor(Math.random() * (orderedElements.length - 1));
+                const elem1 = orderedElements[startIdx];
+                const elem2 = orderedElements[startIdx + 1];
+                // Choose a relation that is actually true for adjacent pair given sign
+                const actualMore = sign === 1 ? true : false;
+                const relation = getRelation(settings, type, actualMore);
+                return {
+                    conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
+                    isValid: true
+                };
+            }
+            break;
+        }
     }
     
     // Fallback to current random pair selection
@@ -619,65 +637,20 @@ export function diversifyComparisonConclusion(
 }
 
 export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
-    let positive = "";
-    let negative = "";
-
-    switch (type) {
-        case EnumQuestionType.Distinction:
-            positive = randomFrom(expressionVariants.Distinction.positive);
-            negative = randomFrom(expressionVariants.Distinction.negative);
-            break;
-        case EnumQuestionType.ComparisonNumerical:
-            positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
-            negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
-            break;
-        case EnumQuestionType.ComparisonChronological:
-            positive = randomFrom(expressionVariants.ComparisonChronological.positive);
-            negative = randomFrom(expressionVariants.ComparisonChronological.negative);
-            break;
-        case EnumQuestionType.Direction:
-            positive = randomFrom(expressionVariants.Direction.positive);
-            negative = randomFrom(expressionVariants.Direction.negative);
-            break;
-        case EnumQuestionType.Direction3DSpatial:
-            positive = randomFrom(expressionVariants.Direction3DSpatial.positive);
-            negative = randomFrom(expressionVariants.Direction3DSpatial.negative);
-            break;
-        case EnumQuestionType.Direction3DTemporal:
-            positive = randomFrom(expressionVariants.Direction3DTemporal.positive);
-            negative = randomFrom(expressionVariants.Direction3DTemporal.negative);
-            break;
-        case EnumQuestionType.GraphMatching:
-            positive = randomFrom(expressionVariants.GraphMatching.positive);
-            negative = randomFrom(expressionVariants.GraphMatching.negative);
-            break;
-        case EnumQuestionType.Analogy:
-            positive = randomFrom(expressionVariants.Analogy.positive);
-            negative = randomFrom(expressionVariants.Analogy.negative);
-            break;
-        case EnumQuestionType.Binary:
-            positive = randomFrom(expressionVariants.Binary.positive);
-            negative = randomFrom(expressionVariants.Binary.negative);
-            break;
-        default:
-            // Fallback for any unhandled question types
-            positive = "related to";
-            negative = "unrelated to";
-            break;
-    }
-
-    let relation = isPositive ? positive : negative;
+    const { text } = renderRelation(pickKeyForType(type, isPositive), false);
     if (settings.enabled.negation && coinFlip()) {
-        switch (relation) {
-            case positive:
-                relation = `<span class="is-negated">${negative}</span>`;
-                break;
-            case negative:
-                relation = `<span class="is-negated">${positive}</span>`;
-                break;
-        }
+        return `<span class="is-negated">${text}</span>`;
     }
-    return relation;
+    return text;
+}
+
+export function getRelationRich(settings: Settings, type: EnumQuestionType, isPositive: boolean, preferVerb = false) {
+    const picked = renderRelation(pickKeyForType(type, isPositive), preferVerb);
+    let text = picked.text;
+    if (settings.enabled.negation && coinFlip()) {
+        text = `<span class="is-negated">${text}</span>`;
+    }
+    return { ...picked, text } as { text: string, needsCopula: boolean, key: any };
 }
 export function createMetaRelationships(settings: Settings, question: Question, length: number) {
     // Substitute a variable number of premises with meta-relations
@@ -755,6 +728,7 @@ export function horizontalShuffleArrangement(premises: IArrangementPremise[]) {
     premises.forEach(premise => {
         if (premise.relationship && coinFlip()) {
             switch (premise.relationship.description) {
+                // Basic relationships (existing)
                 case EnumArrangements.AdjacentLeft: {
                     premise.relationship.description = EnumArrangements.AdjacentRight;
                     switchSubjects(premise);
@@ -793,6 +767,312 @@ export function horizontalShuffleArrangement(premises: IArrangementPremise[]) {
                     switchSubjects(premise);
                     break;
                 }
+                
+                // Enhanced positional relationships
+                case EnumArrangements.Precedes: {
+                    premise.relationship.description = EnumArrangements.Follows;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.Follows: {
+                    premise.relationship.description = EnumArrangements.Precedes;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.ComesBefore: {
+                    premise.relationship.description = EnumArrangements.ComesAfter;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.ComesAfter: {
+                    premise.relationship.description = EnumArrangements.ComesBefore;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPrecededBy: {
+                    premise.relationship.description = EnumArrangements.IsFollowedBy;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsFollowedBy: {
+                    premise.relationship.description = EnumArrangements.IsPrecededBy;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.Leads: {
+                    premise.relationship.description = EnumArrangements.Trails;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.Trails: {
+                    premise.relationship.description = EnumArrangements.Leads;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced directional relationships
+                case EnumArrangements.IsPositionedLeftOf: {
+                    premise.relationship.description = EnumArrangements.IsPositionedRightOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPositionedRightOf: {
+                    premise.relationship.description = EnumArrangements.IsPositionedLeftOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSituatedLeftOf: {
+                    premise.relationship.description = EnumArrangements.IsSituatedRightOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSituatedRightOf: {
+                    premise.relationship.description = EnumArrangements.IsSituatedLeftOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsLocatedLeftOf: {
+                    premise.relationship.description = EnumArrangements.IsLocatedRightOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsLocatedRightOf: {
+                    premise.relationship.description = EnumArrangements.IsLocatedLeftOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPlacedLeftOf: {
+                    premise.relationship.description = EnumArrangements.IsPlacedRightOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPlacedRightOf: {
+                    premise.relationship.description = EnumArrangements.IsPlacedLeftOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSetLeftOf: {
+                    premise.relationship.description = EnumArrangements.IsSetRightOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSetRightOf: {
+                    premise.relationship.description = EnumArrangements.IsSetLeftOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced relative positioning
+                case EnumArrangements.IsAheadOf: {
+                    premise.relationship.description = EnumArrangements.IsBehind;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsBehind: {
+                    premise.relationship.description = EnumArrangements.IsAheadOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsInFrontOf: {
+                    premise.relationship.description = EnumArrangements.IsInBackOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsInBackOf: {
+                    premise.relationship.description = EnumArrangements.IsInFrontOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsForwardOf: {
+                    premise.relationship.description = EnumArrangements.IsBackwardOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsBackwardOf: {
+                    premise.relationship.description = EnumArrangements.IsForwardOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsUpstreamFrom: {
+                    premise.relationship.description = EnumArrangements.IsDownstreamFrom;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsDownstreamFrom: {
+                    premise.relationship.description = EnumArrangements.IsUpstreamFrom;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced movement/flow relationships
+                case EnumArrangements.IsUpstreamOf: {
+                    premise.relationship.description = EnumArrangements.IsDownstreamOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsDownstreamOf: {
+                    premise.relationship.description = EnumArrangements.IsUpstreamOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsAboveInFlow: {
+                    premise.relationship.description = EnumArrangements.IsBelowInFlow;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsBelowInFlow: {
+                    premise.relationship.description = EnumArrangements.IsAboveInFlow;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsHigherInSequence: {
+                    premise.relationship.description = EnumArrangements.IsLowerInSequence;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsLowerInSequence: {
+                    premise.relationship.description = EnumArrangements.IsHigherInSequence;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSuperiorInOrder: {
+                    premise.relationship.description = EnumArrangements.IsInferiorInOrder;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsInferiorInOrder: {
+                    premise.relationship.description = EnumArrangements.IsSuperiorInOrder;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced temporal/logical relationships
+                case EnumArrangements.IsPriorTo: {
+                    premise.relationship.description = EnumArrangements.IsSubsequentTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSubsequentTo: {
+                    premise.relationship.description = EnumArrangements.IsPriorTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsAntecedentTo: {
+                    premise.relationship.description = EnumArrangements.IsConsequentTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsConsequentTo: {
+                    premise.relationship.description = EnumArrangements.IsAntecedentTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPreparatoryTo: {
+                    premise.relationship.description = EnumArrangements.IsConclusiveTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPreliminaryTo: {
+                    premise.relationship.description = EnumArrangements.IsConclusiveTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsIntroductoryTo: {
+                    premise.relationship.description = EnumArrangements.IsConclusiveTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsConclusiveTo: {
+                    premise.relationship.description = EnumArrangements.IsIntroductoryTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced hierarchical relationships
+                case EnumArrangements.IsDominantOver: {
+                    premise.relationship.description = EnumArrangements.IsSubordinateTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSubordinateTo: {
+                    premise.relationship.description = EnumArrangements.IsDominantOver;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSuperiorTo: {
+                    premise.relationship.description = EnumArrangements.IsInferiorTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsInferiorTo: {
+                    premise.relationship.description = EnumArrangements.IsSuperiorTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsPrimaryTo: {
+                    premise.relationship.description = EnumArrangements.IsSecondaryTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsSecondaryTo: {
+                    premise.relationship.description = EnumArrangements.IsPrimaryTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced functional relationships
+                case EnumArrangements.IsPrerequisiteTo: {
+                    premise.relationship.description = EnumArrangements.IsDependentOn;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsDependentOn: {
+                    premise.relationship.description = EnumArrangements.IsPrerequisiteTo;
+                    switchSubjects(premise);
+                    break;
+                }
+                
+                // Enhanced comparative positioning (start/end relative)
+                case EnumArrangements.IsCloserToStartThan: {
+                    premise.relationship.description = EnumArrangements.IsCloserToEndThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsCloserToEndThan: {
+                    premise.relationship.description = EnumArrangements.IsCloserToStartThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsFurtherFromStartThan: {
+                    premise.relationship.description = EnumArrangements.IsFurtherFromEndThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsFurtherFromEndThan: {
+                    premise.relationship.description = EnumArrangements.IsFurtherFromStartThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsNearerToStartThan: {
+                    premise.relationship.description = EnumArrangements.IsNearerToEndThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsNearerToEndThan: {
+                    premise.relationship.description = EnumArrangements.IsNearerToStartThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsMoreDistantFromStartThan: {
+                    premise.relationship.description = EnumArrangements.IsMoreDistantFromEndThan;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsMoreDistantFromEndThan: {
+                    premise.relationship.description = EnumArrangements.IsMoreDistantFromStartThan;
+                    switchSubjects(premise);
+                    break;
+                }
             }
         }
     });
@@ -801,7 +1081,7 @@ export function horizontalShuffleArrangement(premises: IArrangementPremise[]) {
 export function getLinearWays(
     i: number,
     j: number,
-    _: number,
+    numOfEls: number,
     forConclusion = false,
     precise = false
 ) {
@@ -811,8 +1091,13 @@ export function getLinearWays(
     const isLeft = i < j;
     const isRight = i > j;
     const steps = Math.abs(i - j);
+    const isStart = i === 0;
+    const isEnd = i === numOfEls - 1;
+    const isStartJ = j === 0;
+    const isEndJ = j === numOfEls - 1;
 
     const ways: Record<string, { possible: boolean, steps: number }> = {
+        // Basic relationships (existing)
         [EnumArrangements.AdjacentLeft]: {
             possible: isAdjLeft,
             steps
@@ -829,6 +1114,456 @@ export function getLinearWays(
             possible: isRight,
             steps
         },
+        
+        // Enhanced positional relationships
+        [EnumArrangements.Precedes]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.Follows]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.ComesBefore]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.ComesAfter]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsPrecededBy]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsFollowedBy]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.Leads]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.Trails]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.Heads]: {
+            possible: isStart,
+            steps
+        },
+        [EnumArrangements.Tails]: {
+            possible: isEnd,
+            steps
+        },
+        
+        // Enhanced distance-based relationships
+        [EnumArrangements.IsDistantFrom]: {
+            possible: steps > 1,
+            steps
+        },
+        [EnumArrangements.IsCloseTo]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsNearTo]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsFarFrom]: {
+            possible: steps > 2,
+            steps
+        },
+        [EnumArrangements.IsSeparatedFrom]: {
+            possible: steps > 1,
+            steps
+        },
+        [EnumArrangements.IsIsolatedFrom]: {
+            possible: steps > 2,
+            steps
+        },
+        [EnumArrangements.IsGroupedWith]: {
+            possible: steps <= 1,
+            steps
+        },
+        [EnumArrangements.IsClusteredWith]: {
+            possible: steps <= 1,
+            steps
+        },
+        
+        // Enhanced directional relationships
+        [EnumArrangements.IsPositionedLeftOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsPositionedRightOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsSituatedLeftOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsSituatedRightOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsLocatedLeftOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsLocatedRightOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsPlacedLeftOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsPlacedRightOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsSetLeftOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsSetRightOf]: {
+            possible: isRight,
+            steps
+        },
+        
+        // Enhanced sequential relationships
+        [EnumArrangements.IsInSequenceWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsOrderedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsArrangedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsOrganizedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsStructuredWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsSystematizedWith]: {
+            possible: true,
+            steps
+        },
+        
+        // Enhanced relative positioning
+        [EnumArrangements.IsAheadOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsBehind]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsInFrontOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsInBackOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsForwardOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsBackwardOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsUpstreamFrom]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsDownstreamFrom]: {
+            possible: isRight,
+            steps
+        },
+        
+        // Enhanced spatial relationships
+        [EnumArrangements.IsAdjacentTo]: {
+            possible: steps === 1,
+            steps
+        },
+        [EnumArrangements.IsContiguousWith]: {
+            possible: steps === 1,
+            steps
+        },
+        [EnumArrangements.IsConnectedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsLinkedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsJoinedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsAttachedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsBondedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsFusedTo]: {
+            possible: true,
+            steps
+        },
+        
+        // Enhanced comparative positioning (start/end relative)
+        [EnumArrangements.IsCloserToStartThan]: {
+            possible: i < j,
+            steps
+        },
+        [EnumArrangements.IsFurtherFromStartThan]: {
+            possible: i > j,
+            steps
+        },
+        [EnumArrangements.IsNearerToStartThan]: {
+            possible: i < j,
+            steps
+        },
+        [EnumArrangements.IsMoreDistantFromStartThan]: {
+            possible: i > j,
+            steps
+        },
+        [EnumArrangements.IsCloserToEndThan]: {
+            possible: i > j,
+            steps
+        },
+        [EnumArrangements.IsFurtherFromEndThan]: {
+            possible: i < j,
+            steps
+        },
+        [EnumArrangements.IsNearerToEndThan]: {
+            possible: i > j,
+            steps
+        },
+        [EnumArrangements.IsMoreDistantFromEndThan]: {
+            possible: i < j,
+            steps
+        },
+        
+        // Enhanced movement/flow relationships
+        [EnumArrangements.IsUpstreamOf]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsDownstreamOf]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsAboveInFlow]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsBelowInFlow]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsHigherInSequence]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsLowerInSequence]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsSuperiorInOrder]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsInferiorInOrder]: {
+            possible: isRight,
+            steps
+        },
+        
+        // Enhanced temporal/logical relationships
+        [EnumArrangements.IsPriorTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsSubsequentTo]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsAntecedentTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsConsequentTo]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsPreparatoryTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsPreliminaryTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsIntroductoryTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsConclusiveTo]: {
+            possible: isRight,
+            steps
+        },
+        
+        // Enhanced hierarchical relationships
+        [EnumArrangements.IsDominantOver]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsSubordinateTo]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsSuperiorTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsInferiorTo]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsPrimaryTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsSecondaryTo]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsTertiaryTo]: {
+            possible: isRight && steps > 1,
+            steps
+        },
+        [EnumArrangements.IsAncillaryTo]: {
+            possible: isRight && steps > 1,
+            steps
+        },
+        
+        // Enhanced functional relationships
+        [EnumArrangements.IsPrerequisiteTo]: {
+            possible: isLeft,
+            steps
+        },
+        [EnumArrangements.IsDependentOn]: {
+            possible: isRight,
+            steps
+        },
+        [EnumArrangements.IsIndependentOf]: {
+            possible: steps > 1,
+            steps
+        },
+        [EnumArrangements.IsCorrelatedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsAssociatedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsRelatedTo]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsConnectedWith]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsIntegratedWith]: {
+            possible: true,
+            steps
+        },
+        
+        // Enhanced spatial precision relationships
+        [EnumArrangements.IsPositionedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsSituatedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsLocatedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsPlacedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsSetAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsArrangedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsOrganizedAt]: {
+            possible: true,
+            steps
+        },
+        [EnumArrangements.IsStructuredAt]: {
+            possible: true,
+            steps
+        },
+        
+        // Enhanced relative distance relationships
+        [EnumArrangements.IsWithinReachOf]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsBeyondReachOf]: {
+            possible: steps > 2,
+            steps
+        },
+        [EnumArrangements.IsAccessibleTo]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsInaccessibleTo]: {
+            possible: steps > 2,
+            steps
+        },
+        [EnumArrangements.IsReachableFrom]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsUnreachableFrom]: {
+            possible: steps > 2,
+            steps
+        },
+        [EnumArrangements.IsAttainableFrom]: {
+            possible: steps <= 2,
+            steps
+        },
+        [EnumArrangements.IsUnattainableFrom]: {
+            possible: steps > 2,
+            steps
+        }
     };
 
     if (forConclusion) {
@@ -1047,4 +1782,82 @@ export function areGraphsIsomorphic(edgeList1: [string, "↔" | "→" | "←", s
     }
 
     return backtrack(0);
+}
+
+// Add a helper function to check if a relation needs "is"
+export function needsCopula(relation: string): boolean {
+    // Relations that are already complete verb phrases don't need "is"
+    const verbPhrases = [
+        'greater than', 'less than', 'larger than', 'smaller than',
+        'higher than', 'lower than', 'after', 'before', 'connected to',
+        'disconnected from', 'north of', 'south of', 'above', 'below',
+        'relates to', 'corresponds to', 'parallels', 'mirrors',
+        'affirms', 'negates', 'confirms', 'refutes', 'exceeds',
+        'outnumbers', 'outmeasures', 'overtops', 'surpasses',
+        'rises above', 'outscales', 'outweighs', 'comes after',
+        'occurs after', 'postdates', 'succeeds', 'comes before', 'occurs before',
+        'predates', 'precedes', 'moves toward', 'directed toward', 'ascending over',
+        'connects to', 'links to', 'joins with', 'attaches to', 'binds to',
+        'couples with', 'affiliates with', 'ties to', 'integrates with',
+        'maps to', 'routes to', 'pairs with'
+    ];
+    
+    // Check if the relation contains any of these verb phrases
+    return !verbPhrases.some(phrase => relation.toLowerCase().includes(phrase));
+}
+
+// Better approach: categorize relations and format them appropriately
+export function formatRelation(relation: string): { needsCopula: boolean, formattedRelation: string } {
+    // Relations that are complete verb phrases (should be used directly)
+    const verbPhrases = [
+        'exceeds', 'outnumbers', 'outmeasures', 'overtops', 'surpasses', 
+        'tops', 'rises above', 'outscales', 'outweighs', 'comes after',
+        'occurs after', 'postdates', 'succeeds', 'comes before', 'occurs before',
+        'predates', 'precedes', 'moves toward', 'directed toward', 'ascending over',
+        'connects to', 'links to', 'joins with', 'attaches to', 'binds to',
+        'couples with', 'affiliates with', 'ties to', 'integrates with',
+        'maps to', 'routes to', 'pairs with', 'relates to', 'corresponds to',
+        'parallels', 'mirrors', 'affirms', 'negates', 'confirms', 'refutes',
+        'falls short of', 'lags', 'trails numerically', 'outnumbered by',
+        'outweighed by', 'surpassed by', 'does not reach', 'fails to match',
+        'departs from', 'differs from', 'varies from'
+    ];
+    
+    // Relations that are prepositional phrases (need "is")
+    const prepositionalPhrases = [
+        'greater than', 'less than', 'larger than', 'smaller than',
+        'higher than', 'lower than', 'after', 'before', 'connected to',
+        'disconnected from', 'north of', 'south of', 'above', 'below',
+        'equivalent to', 'identical to', 'congruent to', 'the same as',
+        'equal to', 'tantamount to', 'analogous to', 'correspondent to',
+        'commensurate with', 'coincident with', 'coextensive with',
+        'synonymous with', 'interchangeable with', 'indistinguishable from',
+        'on par with', 'aligned with', 'consistent with', 'homologous to',
+        'isomorphic to', 'parallel to', 'correlative to', 'proportional to',
+        'reciprocal to', 'complementary to', 'concomitant with', 'coterminous with',
+        'coequal to', 'distinct from', 'different from', 'dissimilar to',
+        'contrary to', 'opposite to', 'divergent from', 'disparate from',
+        'incompatible with', 'incongruent with', 'antithetical to',
+        'contradictory to', 'inverse to', 'discordant with', 'heterogeneous to',
+        'incommensurable with', 'disproportionate to', 'asymmetric to',
+        'orthogonal to', 'mutually exclusive with', 'at variance with',
+        'at odds with', 'separate from', 'set apart from', 'inconsistent with',
+        'not equivalent to', 'not identical to', 'not analogous to',
+        'not correspondent to', 'not the same as', 'unequal to',
+        'nonidentical to', 'non-equivalent to', 'not interchangeable with',
+        'not congruent to'
+    ];
+    
+    // Check if it's a verb phrase
+    if (verbPhrases.some(phrase => relation.toLowerCase().includes(phrase))) {
+        return { needsCopula: false, formattedRelation: relation };
+    }
+    
+    // Check if it's a prepositional phrase
+    if (prepositionalPhrases.some(phrase => relation.toLowerCase().includes(phrase))) {
+        return { needsCopula: true, formattedRelation: relation };
+    }
+    
+    // Default: assume it needs a copula
+    return { needsCopula: true, formattedRelation: relation };
 }
