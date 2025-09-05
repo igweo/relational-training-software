@@ -43,6 +43,7 @@ import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/
 import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
 import { GraphArrangementComponent } from './components/graph-arrangement/graph-arrangement.component';
 import { GlyphComponent } from './components/glyph/glyph.component';
+import { MatrixCanvasComponent } from './components/matrix-canvas/matrix-canvas.component';
 
 const routes: Routes = [
     {
@@ -123,6 +124,7 @@ const routes: Routes = [
         SettingsComponent,
         GraphArrangementComponent,
         GlyphComponent,
+        MatrixCanvasComponent,
     ],
     imports: [
         CommonModule,

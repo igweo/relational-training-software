@@ -76,6 +76,13 @@ export class Question {
     // New glyphs array for visual relation encoding
     glyphs?: import("./question.models").IGlyph[];
 
+    // Matrix engine (optional, non-breaking)
+    seed?: number;
+    matrixRules?: any[];
+    matrixCells?: any[][];
+    optionCells?: any[];
+    explanation?: string[];
+
     constructor(type: EnumQuestionType) {
         this.type = type;
     }

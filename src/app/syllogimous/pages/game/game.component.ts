@@ -25,6 +25,7 @@ export class GameComponent {
     timerTimeSeconds = 0;
     trueButtonToTheRight = false;
     selectedOption: string | null = null;
+    selectedOptionIndex: number | null = null;
     
     // Graph arrangement state
     showGraphModal = false;
@@ -171,6 +172,12 @@ export class GameComponent {
         this.selectedOption = option;
     }
 
+    selectMatrixOption(index: number) {
+        this.selectedOptionIndex = index;
+        const options = this.sylSrv.question.options as string[] | undefined;
+        this.selectedOption = options && index >= 0 && index < options.length ? options[index] : null;
+    }
+
     handleAnswer(answer: boolean) {
         this.userAnswer = answer;
         this.gameTimerService.stop();
@@ -192,8 +199,9 @@ export class GameComponent {
 
     submitAnswer() {
         // For Matrix Reasoning questions, check if the selected option is correct
-        if (this.sylSrv.question.type === 'Matrix Reasoning' && this.selectedOption) {
-            const isCorrect = this.selectedOption === this.sylSrv.question.correctAnswer;
+        if (this.sylSrv.question.type === 'Matrix Reasoning' && (this.selectedOptionIndex !== null || this.selectedOption)) {
+            const pick = this.selectedOption ?? (this.sylSrv.question.options?.[this.selectedOptionIndex!] ?? null);
+            const isCorrect = pick === this.sylSrv.question.correctAnswer;
             this.sylSrv.checkQuestion(isCorrect);
         }
         this.gameTimerService.stop();

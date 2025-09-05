@@ -16,6 +16,7 @@ import { Logger } from "../utils/logger";
 import { GameTimerService } from "./game-timer.service";
 import { SpeechService } from "./speech.service"
 import { forEach, forEachRight } from "lodash";
+import { MatrixReasoningService } from "./matrix-reasoning.service";
 
 @Injectable({
     providedIn: "root"
@@ -64,7 +65,8 @@ export class SyllogimousService {
         private router: Router,
         private progressAndPerformanceService: ProgressAndPerformanceService,
         private gameTimerService: GameTimerService,
-        private speechService: SpeechService
+        private speechService: SpeechService,
+        private matrixSrv: MatrixReasoningService
     ) {
         this.loadScore();
         (window as any).syllogimous = this;
@@ -147,51 +149,36 @@ export class SyllogimousService {
             throw new Error("Cannot generate.");
         }
 
-        const matrixSize = 3;
         const question = new Question(type);
+        const seed = Date.now() & 0x7fffffff;
+        const result = this.matrixSrv.generate({ seed, level: 1, size: 3 });
 
-        // Choose pattern type based on available logical frameworks
-        const patternTypes = [
-            'distinction-comparison',
-            'shape-size',
-            'direction-rotation',
-            'sequence-progression'
-        ];
-        const patternType = pickUniqueItems(patternTypes, 1).picked[0];
-
-        let matrix: string[][] = [];
-        let missingAnswer = '';
-
-        switch (patternType) {
-            case 'distinction-comparison':
-                ({ matrix, missingAnswer } = this.createDistinctionComparisonMatrix());
-                break;
-            case 'shape-size':
-                ({ matrix, missingAnswer } = this.createShapeSizeMatrix());
-                break;
-            case 'direction-rotation':
-                ({ matrix, missingAnswer } = this.createDirectionRotationMatrix());
-                break;
-            case 'sequence-progression':
-                ({ matrix, missingAnswer } = this.createSequenceProgressionMatrix());
-                break;
+        // Map to existing UI representation (string matrix and option strings)
+        const toChar = (cell: any) => this.matrixSrv.cellToSymbol(cell);
+        const matrix: string[][] = [];
+        for (let r = 0; r < result.cells.length; r++) {
+            const row: string[] = [];
+            for (let c = 0; c < result.cells[r].length; c++) {
+                row.push((r === result.missing.row && c === result.missing.col) ? '?' : toChar(result.cells[r][c]));
+            }
+            matrix.push(row);
         }
 
-        // Randomly select one cell to be missing
-        const missingRow = Math.floor(Math.random() * matrixSize);
-        const missingCol = Math.floor(Math.random() * matrixSize);
-        const correctAnswer = matrix[missingRow][missingCol];
-        matrix[missingRow][missingCol] = "?";
+        const correctCell = result.cells[result.missing.row][result.missing.col];
+        const correctAnswer = toChar(correctCell);
+        const options = result.options.map(toChar);
+        const correctOption = options[result.correctIndex];
 
-        // Generate multiple choice options with intelligent distractors
-        const distractors = this.generateMatrixDistractors(matrix, correctAnswer, patternType);
-        const options = [correctAnswer, ...distractors];
-        shuffle(options);
+        question.seed = seed;
+        question.matrixRules = result.rules as any[];
+        question.explanation = result.explanation;
+        question.matrixCells = result.cells as any;
+        question.optionCells = result.options as any;
 
         question.matrix = matrix;
-        question.missingPosition = { row: missingRow, col: missingCol };
+        question.missingPosition = { row: result.missing.row, col: result.missing.col };
         question.options = options;
-        question.correctAnswer = correctAnswer;
+        question.correctAnswer = correctOption;
         question.isValid = true;
 
         question.instructions = [
