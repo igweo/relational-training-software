@@ -393,6 +393,18 @@ export const expressionVariants = {
       "invalidates the claim of", "argues against", "stands against"
     ]
   }
+  ,
+  InclusionExclusion: {
+    positive: [
+      "is included in", "is contained within", "is part of", "belongs to",
+      "is encompassed by", "is within", "is inside", "is enclosed by",
+      "is nested in", "is housed in"
+    ],
+    negative: [
+      "is excluded from", "is not contained in", "is outside", "is separate from",
+      "is apart from", "is distinct from", "is independent of", "is not inside"
+    ]
+  }
 };
 
 const randomFrom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -1140,12 +1152,15 @@ export function getCircularWays(
     j = (numOfEls + (j - i)) % numOfEls;
     i = 0;
 
-    const isAdjLeft = getAdjLeft(i) === j;
-    const isAdjRight = getAdjRight(i) === j;
+    const cwSteps = getCWDist(i, j);
+    const ccwSteps = getCCWDist(i, j);
+
+    const isAdjLeft = getAdjLeft(i) === j;   // one step CW
+    const isAdjRight = getAdjRight(i) === j; // one step CCW
     const isNext = isAdjLeft || isAdjRight;
     const isLeft = j < getInFront(i);
     const isRight = j > getInFront(i);
-    const steps = Math.min(getCWDist(i, j), getCCWDist(i, j));
+    const steps = Math.min(cwSteps, ccwSteps);
 
     const ways: Record<string, { possible: boolean, steps: number }> = {
         [EnumArrangements.AdjacentLeft]: {
@@ -1156,14 +1171,19 @@ export function getCircularWays(
             possible: isAdjRight,
             steps
         },
-        [EnumArrangements.NStepsLeft]: {
-            possible: isLeft || steps === (numOfEls / 2),
-            steps
-        },
-        [EnumArrangements.NStepsRight]: {
-            possible: isRight || steps === (numOfEls / 2),
-            steps
-        },
+        [EnumArrangements.NStepsLeft]: { possible: isLeft || steps === (numOfEls / 2), steps },
+        [EnumArrangements.NStepsRight]: { possible: isRight || steps === (numOfEls / 2), steps },
+
+        // Enhanced circular - directional
+        [EnumArrangements.IsClockwiseOf]: { possible: cwSteps > 0 && cwSteps < ccwSteps, steps: cwSteps },
+        [EnumArrangements.IsCounterclockwiseOf]: { possible: ccwSteps > 0 && ccwSteps < cwSteps, steps: ccwSteps },
+        [EnumArrangements.IsImmediatelyClockwiseOf]: { possible: cwSteps === 1, steps: cwSteps },
+        [EnumArrangements.IsImmediatelyCounterclockwiseOf]: { possible: ccwSteps === 1, steps: ccwSteps },
+        [EnumArrangements.IsNStepsClockwiseOf]: { possible: cwSteps > 0, steps: cwSteps },
+        [EnumArrangements.IsNStepsCounterclockwiseOf]: { possible: ccwSteps > 0, steps: ccwSteps },
+
+        // Directionless distance on the ring
+        [EnumArrangements.IsNStepsAwayFrom]: { possible: steps > 0, steps },
     };
 
     // Even num of els do have diametrically opposite els
@@ -1397,4 +1417,187 @@ export function formatRelation(relation: string): { needsCopula: boolean, format
     
     // Default: assume it needs a copula
     return { needsCopula: true, formattedRelation: relation };
+}
+
+export function stripTags(s: string): string {
+    return s.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Build a relative-clause variant that attaches the relation to the right-hand subject
+ * using a “which”-style preposition (e.g., "to which", "from which", "within which").
+ * Returns null if no natural variant is available for the given relation.
+ */
+export function buildWhichClauseVariant(left: string, relationHtml: string, right: string): string | null {
+    const relation = stripTags(relationHtml).trim();
+    const lc = relation.toLowerCase();
+    const isNegWrapped = /<span class="is-negated">/.test(relationHtml);
+    const negWord = isNegWrapped ? ' not' : '';
+
+    const subj = (s: string) => `<span class="subject">${s}</span>`;
+
+    const endsWith = (prep: string) => {
+        const m = lc.match(new RegExp(`^(.*)\\s+${prep}\\b`));
+        return m ? m[1] : null;
+    };
+
+    // Handle "… to"
+    const rootTo = endsWith('to');
+    if (rootTo) {
+        return `${subj(right)} is the one to which ${subj(left)} is${negWord} ${rootTo}`;
+    }
+
+    // Handle "… from"
+    const rootFrom = endsWith('from');
+    if (rootFrom) {
+        return `${subj(right)} is the one from which ${subj(left)} is${negWord} ${rootFrom}`;
+    }
+
+    // Handle "… with"
+    const rootWith = endsWith('with');
+    if (rootWith) {
+        return `${subj(right)} is the one with which ${subj(left)} is${negWord} ${rootWith}`;
+    }
+
+    // Directional/flow "… of"
+    const ofDirectional = [
+        'north of', 'south of', 'east of', 'west of',
+        'downstream of', 'upstream of'
+    ];
+    if (ofDirectional.some(p => lc.includes(p))) {
+        const connector = ofDirectional.find(p => lc.includes(p))!;
+        return `${subj(right)} is the one ${connector} which ${subj(left)} is${negWord} located`;
+    }
+
+    // Spatial prepositions
+    const spatialPreps = new Map<string, string>([
+        ['above', 'above which'],
+        ['below', 'below which'],
+        ['inside', 'inside which'],
+        ['outside', 'outside of which'],
+        ['on', 'on which'],
+        ['under', 'under which'],
+        ['near', 'near which'],
+        ['beside', 'beside which'],
+    ]);
+    for (const [key, connector] of spatialPreps) {
+        if (lc === key || lc.startsWith(`${key} `)) {
+            return `${subj(right)} is the one ${connector} ${subj(left)} is${negWord} located`;
+        }
+    }
+
+    // Temporal prepositions
+    const temporalPreps = new Map<string, string>([
+        ['before', 'before which'],
+        ['after', 'after which'],
+        ['during', 'during which'],
+        ['throughout', 'throughout which']
+    ]);
+    for (const [key, connector] of temporalPreps) {
+        if (lc === key || lc.startsWith(`${key} `)) {
+            return `${subj(right)} is the one ${connector} ${subj(left)}${negWord ? ' does not' : ''} occur${negWord ? '' : 's'}`;
+        }
+    }
+
+    // Graph relations
+    if (lc.includes('connected to') || lc.includes('linked to')) {
+        return `${subj(right)} is the one to which ${subj(left)} is${negWord} connected`;
+    }
+    if (lc.includes('disconnected from') || lc.includes('separate from')) {
+        return `${subj(right)} is the one from which ${subj(left)} is${negWord} disconnected`;
+    }
+
+    // Numerical comparisons not natural as relative clauses
+    if (lc.includes('greater than') || lc.includes('less than') || (lc.includes('equal to') && !endsWith('to'))) {
+        return null;
+    }
+
+    const single = lc.match(/^(above|below|inside|outside|on|under|near|beside)\b/);
+    if (single) {
+        return `${subj(right)} is the one ${single[1]} which ${subj(left)} is${negWord} located`;
+    }
+
+    return null;
+}
+
+/**
+ * Shuffles the order of entities within premises to make them less predictable.
+ * This function randomly flips the order of subjects in premises where it's semantically safe.
+ */
+export function shuffleWithinPremiseOrder(premises: string[]): string[] {
+    return premises.map(premise => {
+        // Extract subjects from the premise
+        const subjectMatches = [...premise.matchAll(/<span class="subject">(.*?)<\/span>/g)];
+        
+        if (subjectMatches.length !== 2) {
+            return premise; // Can't shuffle if not exactly 2 subjects
+        }
+        
+        const [subject1, subject2] = subjectMatches.map(match => match[1]);
+        const [fullMatch1, fullMatch2] = subjectMatches.map(match => match[0]);
+        
+        // Randomly decide whether to flip the order
+        if (!coinFlip()) {
+            return premise; // Keep original order
+        }
+        
+        // Check if this is a symmetric relation (safe to flip)
+        const isSymmetric = premise.includes('is the same as') || 
+                           premise.includes('is identical to') || 
+                           premise.includes('is equivalent to') ||
+                           premise.includes('is equal to') ||
+                           premise.includes('is different from') ||
+                           premise.includes('is distinct from') ||
+                           premise.includes('differs from') ||
+                           premise.includes('is connected to') ||
+                           premise.includes('is related to');
+        
+        if (isSymmetric) {
+            // For symmetric relations, we can safely flip the order
+            return premise
+                .replace(fullMatch1, `<span class="subject">${subject2}</span>`)
+                .replace(fullMatch2, `<span class="subject">${subject1}</span>`);
+        }
+        
+        // For asymmetric relations, we need to be more careful
+        // Check if we can flip by also inverting the relation
+        const relationMatch = premise.match(/is\s+([^<]+)\s+<span class="subject">/);
+        if (relationMatch) {
+            const relation = relationMatch[1].trim();
+            
+            // Define inverse relations for common asymmetric cases
+            const inverseRelations: { [key: string]: string } = {
+                'greater than': 'less than',
+                'larger than': 'smaller than',
+                'higher than': 'lower than',
+                'more than': 'less than',
+                'after': 'before',
+                'later than': 'earlier than',
+                'subsequent to': 'prior to',
+                'following': 'preceding',
+                'precedes': 'follows',
+                'comes before': 'comes after',
+                'is before': 'is after',
+                'is left of': 'is right of',
+                'is right of': 'is left of',
+                'is above': 'is below',
+                'is below': 'is above',
+                'is north of': 'is south of',
+                'is south of': 'is north of',
+                'is east of': 'is west of',
+                'is west of': 'is east of'
+            };
+            
+            const inverseRelation = inverseRelations[relation];
+            if (inverseRelation) {
+                return premise
+                    .replace(fullMatch1, `<span class="subject">${subject2}</span>`)
+                    .replace(fullMatch2, `<span class="subject">${subject1}</span>`)
+                    .replace(`is ${relation}`, `is ${inverseRelation}`);
+            }
+        }
+        
+        // If we can't safely flip, return the original premise
+        return premise;
+    });
 }

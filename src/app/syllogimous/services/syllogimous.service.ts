@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Question } from "../models/question.models";
-import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation } from "../utils/question.utils";
+import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
 import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER } from "../constants/local-storage.constants";
@@ -135,6 +135,7 @@ export class SyllogimousService {
 
             [EnumQuestionType.Binary]: () => this.createBinary(numOfPremises),
             [EnumQuestionType.MatrixReasoning]: () => this.createMatrixReasoning(numOfPremises),
+            [EnumQuestionType.InclusionExclusion]: () => this.createInclusionExclusion(numOfPremises),
         }[questionType];
 
     }
@@ -335,12 +336,27 @@ export class SyllogimousService {
 
         const choices: Array<() => Question> = [];
 
+        // Optional filter: only spatial/directional/temporal types
+        const onlySpatioTemporal = !!settings.enabled.spatioTemporalMode;
+        const spatioTemporalAllowed: EnumQuestionType[] = [
+            EnumQuestionType.LinearArrangement,
+            EnumQuestionType.CircularArrangement,
+            EnumQuestionType.Direction,
+            EnumQuestionType.Direction3DSpatial,
+            EnumQuestionType.Direction3DTemporal,
+            EnumQuestionType.InclusionExclusion,
+            EnumQuestionType.ComparisonChronological,
+        ];
+
         // Pick one question from each group so that the distribution is uniform
         // The "isUndefinedGroup" predicate is used to push all ungrouped question into choices
         for (const grouped of groupsOfQuestions) {
             const isUndefinedGroup = grouped === groupsOfQuestions[0];
             const groupChoices: Array<() => Question> = isUndefinedGroup ? choices : [];
             for (const [qt, qs] of grouped) {
+                if (onlySpatioTemporal && !spatioTemporalAllowed.includes(qt)) {
+                    continue;
+                }
                 const shouldIncludeQuestion = (basic == undefined) ? true : qs.basic === basic;
                 if (qs.enabled && shouldIncludeQuestion) {
                     groupChoices.push(this.getCreateFn(qt, qs.clampNumOfPremises(numOfPremises || qs.getNumOfPremises())));
@@ -526,85 +542,82 @@ export class SyllogimousService {
         return question;
     }
 
-        createDistinction(numOfPremises: number): Question {
-            this.logger.info("createDistinction");
+    createDistinction(numOfPremises: number): Question {
+      this.logger.info("createDistinction");
 
-            const type = EnumQuestionType.Distinction;
-            const settings = this.settings;
+      const type = EnumQuestionType.Distinction;
+      const settings = this.settings;
 
-            if (!canGenerateQuestion(type, numOfPremises, settings)) {
-                throw new Error("Cannot generate.");
-            }
+      if (!canGenerateQuestion(type, numOfPremises, settings)) {
+          throw new Error("Cannot generate.");
+      }
 
-            const length = numOfPremises + 1;
-            const symbols = getRandomSymbols(settings, length);
-            const question = new Question(type);
+      const length = numOfPremises + 1;
+      const symbols = getRandomSymbols(settings, length);
+      const question = new Question(type);
 
-            do {
-                const rnd = Math.floor(Math.random() * symbols.length);
-                const first = symbols.splice(rnd, 1);
-                let prev = first[0];
-                let curr = "";
+      do {
+          // Build buckets first (random non-empty split), then derive premises from buckets
+          const allElements = [...symbols];
+          const shuffledForBuckets = shuffle([...allElements]);
+          const splitIdx = 1 + Math.floor(Math.random() * (length - 1));
+          question.buckets = [shuffledForBuckets.slice(0, splitIdx), shuffledForBuckets.slice(splitIdx)];
 
-                question.buckets = [[prev], []];
-                let prevBucket = 0;
+          question.premises = [];
 
-                question.premises = [];
+          // Create unique random pairs (unordered) covering the set, not a simple chain
+          const pairKeys = new Set<string>();
+          const keyFor = (x: string, y: string) => [x, y].sort().join("|");
 
-                for (let i = 0; i < length - 1; i++) {
-                    const rnd = Math.floor(Math.random() * symbols.length);
-                    const currArr = symbols.splice(rnd, 1);
-                    curr = currArr[0];
+          while (question.premises.length < length - 1) {
+              const [a, b] = pickUniqueItems(allElements, 2).picked;
+              const k = keyFor(a, b);
+              if (pairKeys.has(k)) {
+                  continue;
+              }
+              pairKeys.add(k);
 
-                    const isSameAs = coinFlip();
-                    const relation = getRelation(settings, type, isSameAs);
-                    
-                    // Use formatRelation to determine the proper format
-                    const { needsCopula, formattedRelation } = formatRelation(relation);
-                    const copula = needsCopula ? "is" : "";
-                    // Randomly flip direction (A->B vs B->A) for variety
-                    const flipDir = coinFlip();
-                    const left = flipDir ? curr : prev;
-                    const right = flipDir ? prev : curr;
-                    const premise = copula 
-                        ? `<span class="subject">${left}</span> ${copula} ${formattedRelation} <span class="subject">${right}</span>`
-                        : `<span class="subject">${left}</span> ${formattedRelation} <span class="subject">${right}</span>`;
-                    
-                    question.premises.push(premise);
+              const inBucket0a = question.buckets[0].includes(a);
+              const inBucket0b = question.buckets[0].includes(b);
+              const isSameAs = inBucket0a === inBucket0b;
 
-                    if (!isSameAs) {
-                        prevBucket = (prevBucket + 1) % 2;
-                    }
+              const relation = getRelation(settings, type, isSameAs);
+              const { needsCopula, formattedRelation } = formatRelation(relation);
 
-                    question.buckets[prevBucket].push(curr);
+              // Randomly flip the visible order; Distinction relations are symmetric
+              const [left, right] = coinFlip() ? [a, b] : [b, a];
 
-                    prev = curr;
-                }
+              let premise = needsCopula
+                  ? `<span class="subject">${left}</span> is ${formattedRelation} <span class="subject">${right}</span>`
+                  : `<span class="subject">${left}</span> ${formattedRelation} <span class="subject">${right}</span>`;
 
-                // All same is useless, in that case repeat
-                if (!question.buckets[0].length || !question.buckets[1].length) {
-                    return this.createDistinction(numOfPremises);
-                }
+              const whichVariant = buildWhichClauseVariant(left, formattedRelation, right);
+              if (whichVariant && coinFlip()) {
+                  premise = whichVariant;
+              }
 
-                createMetaRelationships(settings, question, length);
+              question.premises.push(premise);
+          }
 
-                // Use diversified conclusion generation
-                const allElements = [...question.buckets[0], ...question.buckets[1]].flat();
-                const diversifiedConclusion = diversifyDistinctionConclusion(
-                    settings, 
-                    type, 
-                    question.buckets, 
-                    allElements
-                );
-                
-                question.conclusion = diversifiedConclusion.conclusion;
-                question.isValid = diversifiedConclusion.isValid;
-            } while (isPremiseLikeConclusion(question.premises, question.conclusion));
+          createMetaRelationships(settings, question, length);
 
-            shuffle(question.premises);
+          // Diversified conclusion generation (unchanged)
+          const allSubjects = [...question.buckets[0], ...question.buckets[1]].flat();
+          const diversifiedConclusion = diversifyDistinctionConclusion(
+              settings,
+              type,
+              question.buckets,
+              allSubjects
+          );
 
-            return question;
-        }
+          question.conclusion = diversifiedConclusion.conclusion;
+          question.isValid = diversifiedConclusion.isValid;
+      } while (isPremiseLikeConclusion(question.premises, question.conclusion));
+
+      shuffle(question.premises);
+
+      return question;
+  }
 
     createComparison(numOfPremises: number, type: EnumQuestionType.ComparisonNumerical | EnumQuestionType.ComparisonChronological) {
         this.logger.info("createComparison:", type);
@@ -633,7 +646,11 @@ export class SyllogimousService {
                 const [first, last] = ((sign === 1) === isMoreOrAfter) ? [next, curr] : [curr, next];
                 const relation = getRelation(settings, type, isMoreOrAfter);
 
-                question.premises.push(`<span class="subject">${first}</span> is ${relation} <span class="subject">${last}</span>`);
+                {
+                    const base = `<span class="subject">${first}</span> is ${relation} <span class="subject">${last}</span>`;
+                    const whichVariant = buildWhichClauseVariant(first, relation, last);
+                    question.premises.push(whichVariant && coinFlip() ? whichVariant : base);
+                }
             }
 
             createMetaRelationships(settings, question, length);
@@ -1736,4 +1753,94 @@ export class SyllogimousService {
 
         return question;
     }
+
+    createInclusionExclusion(numOfPremises: number): Question {
+      this.logger.info("createInclusionExclusion");
+
+      const type = EnumQuestionType.InclusionExclusion;
+      const settings = this.settings;
+
+      if (!canGenerateQuestion(type, numOfPremises, settings)) {
+          throw new Error("Cannot generate.");
+      }
+
+      const question = new Question(type);
+
+      const length = Math.min(numOfPremises + 2, 8);
+      question.bucket = getRandomSymbols(settings, length);
+
+      // Build random inclusion/exclusion relationships without duplicate pairs
+      const relationships: Array<{ a: string, b: string, isIncluded: boolean }> = [];
+      const usedPairs = new Set<string>();
+      const keyFor = (x: string, y: string) => [x, y].sort().join("|");
+
+      while (relationships.length < numOfPremises) {
+          const [a, b] = pickUniqueItems(question.bucket, 2).picked;
+          const k = keyFor(a, b);
+          if (usedPairs.has(k)) continue;
+          usedPairs.add(k);
+
+          const isIncluded = coinFlip();
+          relationships.push({ a, b, isIncluded });
+      }
+
+      question.premises = relationships.map(({ a, b, isIncluded }) => {
+          const relation = getRelation(settings, type, isIncluded);
+          // randomize visible order
+          const flip = coinFlip();
+          const left = flip ? a : b;
+          const right = flip ? b : a;
+          return `<span class="subject">${left}</span> is ${relation} <span class="subject">${right}</span>`;
+      });
+
+      // Conclusion: pick two and compute inclusion truth; then choose relation independently
+      const [ca, cb] = pickUniqueItems(question.bucket, 2).picked;
+
+      const insideTruth = (() => {
+          const inclusionGraph = new Map<string, Set<string>>();
+          const exclusion = new Set<string>();
+
+          for (const { a, b, isIncluded } of relationships) {
+              if (isIncluded) {
+                  if (!inclusionGraph.has(a)) inclusionGraph.set(a, new Set());
+                  inclusionGraph.get(a)!.add(b);
+              } else {
+                  exclusion.add(keyFor(a, b));
+              }
+          }
+
+          const dfs = (from: string, target: string, visited = new Set<string>()): boolean => {
+              if (from === target) return true;
+              if (visited.has(from)) return false;
+              visited.add(from);
+              const nexts = inclusionGraph.get(from);
+              if (!nexts) return false;
+              for (const n of nexts) {
+                  if (dfs(n, target, visited)) return true;
+              }
+              return false;
+          };
+
+          if (exclusion.has(keyFor(ca, cb))) return false;
+          return dfs(ca, cb);
+      })();
+
+      // Pick how to phrase the conclusion independently of truth
+      const showPositive = coinFlip(); // true -> "inside", false -> "outside"
+      const rel = getRelation(settings, type, showPositive);
+
+      // Evaluate the displayed statement's truth
+      question.isValid = showPositive ? insideTruth : !insideTruth;
+
+      question.conclusion = `<span class="subject">${ca}</span> is ${rel} <span class="subject">${cb}</span>`;
+
+      question.instructions = [
+          "Use inclusion/exclusion logic (containment vs outside) to judge the conclusion."
+      ];
+
+      shuffle(question.premises);
+      question.premises = shuffleWithinPremiseOrder(question.premises);
+
+      return question;
+  }
 }

@@ -101,6 +101,12 @@ export const QUESTION_TYPE_SETTING_PARAMS: Record<EnumQuestionType, ISettingPara
         maxNumOfPremises: 1,
         basic: true
     },
+    [EnumQuestionType.InclusionExclusion]: {
+        enabled: true,
+        minNumOfPremises: 2,
+        maxNumOfPremises: 20,
+        basic: true
+    },
 }
 
 export const DEFAULT_ENABLED_FLAGS = {
@@ -110,6 +116,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     audioMode: true,
     speechMode: false,
     visualMode: false,
+    spatioTemporalMode: false,
     graphArrangementMode: true,
     binary: {
         and: true,

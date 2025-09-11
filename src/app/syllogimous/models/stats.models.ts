@@ -14,6 +14,7 @@ export class TypeBasedStats {
     [EnumQuestionType.Analogy] = new TypeBasedStatsInner(EnumQuestionType.Analogy);
     [EnumQuestionType.Binary] = new TypeBasedStatsInner(EnumQuestionType.Binary);
     [EnumQuestionType.MatrixReasoning] = new TypeBasedStatsInner(EnumQuestionType.MatrixReasoning);
+    [EnumQuestionType.InclusionExclusion] = new TypeBasedStatsInner(EnumQuestionType.InclusionExclusion);
 }
 
 export class TypeBasedStatsInner {

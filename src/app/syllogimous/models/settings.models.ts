@@ -123,6 +123,7 @@ export class Settings {
         this.initQuestionSettings(EnumQuestionType.Analogy);
         this.initQuestionSettings(EnumQuestionType.Binary);
         this.initQuestionSettings(EnumQuestionType.MatrixReasoning);
+        this.initQuestionSettings(EnumQuestionType.InclusionExclusion);
     }
 
     initQuestionSettings(type: EnumQuestionType) {

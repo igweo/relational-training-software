@@ -13,6 +13,7 @@ export enum EnumQuestionType {
     Analogy = "Analogy",
     Binary = "Binary",
     MatrixReasoning = "Matrix Reasoning",
+    InclusionExclusion = "Inclusion/Exclusion",
 }
 
 export enum EnumArrangements {
@@ -25,6 +26,15 @@ export enum EnumArrangements {
     Left = "is at the left of",
     Right = "is at the right of",
     InFront = "is diametrically opposite to", // not used by linear
+    
+    // Enhanced circular relationships - Directional
+    IsClockwiseOf = "is clockwise of",
+    IsCounterclockwiseOf = "is counterclockwise of",
+    IsImmediatelyClockwiseOf = "is immediately clockwise of",
+    IsImmediatelyCounterclockwiseOf = "is immediately counterclockwise of",
+    IsNStepsClockwiseOf = "is # steps clockwise of",
+    IsNStepsCounterclockwiseOf = "is # steps counterclockwise of",
+    IsNStepsAwayFrom = "is # steps away from",
     
     // Enhanced linear relationships - Positional
     Precedes = "precedes",
@@ -159,7 +169,7 @@ export enum EnumArrangements {
     IsStructuredAt = "is structured at",
     
     // Enhanced linear relationships - Relative distance
-    IsWithinReachOf = "is within reach of",
+    IsWithinReachOIsWithinReachOff = "is within reach of",
     IsBeyondReachOf = "is beyond reach of",
     IsAccessibleTo = "is accessible to",
     IsInaccessibleTo = "is inaccessible to",

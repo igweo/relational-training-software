@@ -173,6 +173,26 @@
         </div>
 
         <div class="card shadow-sm">
+            <div class="card-header py-2 small">Spatio-temporal filtering</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="spatioTemporalMode"
+                        [formControl]="spatioTemporalMode"
+                    >
+                    <label class="form-check-label" for="spatioTemporalMode">
+                        Only include spatial, directional, and temporal question types
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">
+                    Limits selection to Linear/Circular arrangements, Direction (2D/3D), Inclusion/Exclusion, and Chronological comparisons
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
             <div class="card-header py-2 small">Graph arrangement settings</div>
             <div class="card-body">
                 <div class="form-check">

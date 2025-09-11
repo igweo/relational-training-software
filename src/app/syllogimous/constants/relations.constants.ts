@@ -145,6 +145,8 @@ export function pickKeyForType(type: EnumQuestionType, positive: boolean) {
             return positive ? RelationKey.SameAs : RelationKey.DifferentFrom;
         case EnumQuestionType.Binary:
             return positive ? RelationKey.Confirms : RelationKey.Refutes;
+        case EnumQuestionType.InclusionExclusion:
+            return positive ? RelationKey.Inside : RelationKey.Outside;
         default:
             return positive ? RelationKey.SameAs : RelationKey.DifferentFrom;
     }
