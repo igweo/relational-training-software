@@ -1425,7 +1425,7 @@ export function stripTags(s: string): string {
 
 /**
  * Build a relative-clause variant that attaches the relation to the right-hand subject
- * using a “which”-style preposition (e.g., "to which", "from which", "within which").
+ * using a "which"-style preposition (e.g., "to which", "from which", "within which").
  * Returns null if no natural variant is available for the given relation.
  */
 export function buildWhichClauseVariant(left: string, relationHtml: string, right: string): string | null {
@@ -1600,4 +1600,57 @@ export function shuffleWithinPremiseOrder(premises: string[]): string[] {
         // If we can't safely flip, return the original premise
         return premise;
     });
+}
+
+export function buildConnectedNarrative(premises: string[]): string {
+    const plain = premises.map(p => stripTags(p));
+
+    // Try to extract subjects and relation text: "A is REL B" or "A REL B"
+    const parsed = plain.map(line => {
+        const m1 = line.match(/^(.+?)\s+is\s+(.+?)\s+(.+)$/i);
+        if (m1) { return { a: m1[1], rel: m1[2], b: m1[3] }; }
+        const m2 = line.match(/^(.+?)\s+([^\s].*?)\s+(.+)$/i);
+        if (m2) { return { a: m2[1], rel: m2[2], b: m2[3] }; }
+        return { a: '', rel: line, b: '' };
+    });
+
+    const connectorFor = (rel: string) => {
+        const r = rel.toLowerCase();
+        if (/(before|after|during|throughout|earlier|later|prior|subsequent)/.test(r)) return 'Then,';
+        if (/(north|south|east|west|above|below|inside|outside|near|beside|adjacent|between|on|under|upstream|downstream)/.test(r)) return 'Meanwhile,';
+        if (/(because|causes|caused by|enables|inhibits|implies|contradicts|supports|undermines|confirms|refutes)/.test(r)) return 'As a result,';
+        return 'Moreover,';
+    };
+
+    const parts: string[] = [];
+    for (let i = 0; i < parsed.length; i++) {
+        const { a, rel, b } = parsed[i];
+        const left = a || 'Subject 1';
+        const right = b || 'Subject 2';
+        const which = buildWhichClauseVariant(left, rel, right);
+
+        let sentence: string;
+        if (which) {
+            sentence = which.trim();
+        } else {
+            const { needsCopula } = formatRelation(rel);
+            sentence = needsCopula
+                ? `${left} is ${rel} ${right}`
+                : `${left} ${rel} ${right}`;
+        }
+
+        // Ensure terminal punctuation for each clause
+        sentence = sentence.replace(/\s+/g, ' ').trim();
+        if (!/[.!?]$/.test(sentence)) {
+            sentence += '.';
+        }
+
+        if (i === 0) {
+            parts.push(sentence);
+        } else {
+            parts.push(`${connectorFor(rel)} ${sentence}`);
+        }
+    }
+
+    return parts.join(' ');
 }

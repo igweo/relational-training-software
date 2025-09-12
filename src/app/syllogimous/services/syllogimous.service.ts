@@ -1,9 +1,9 @@
 import { Injectable } from "@angular/core";
 import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Question } from "../models/question.models";
-import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant } from "../utils/question.utils";
+import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant, buildConnectedNarrative } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
-import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER } from "../constants/local-storage.constants";
+import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE } from "../constants/local-storage.constants";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ModalLevelChangeComponent } from "../components/modal-level-change/modal-level-change.component";
 import { Router } from "@angular/router";
@@ -90,6 +90,12 @@ export class SyllogimousService {
         settings.setEnable("meta", false);
         settings.setEnable("meaningfulWords", true);
         settings.setEnable("audioMode", true);
+
+        // Read feature flags from localStorage (set via Settings page)
+        const st = localStorage.getItem(LS_SPATIO_TEMPORAL_MODE);
+        settings.enabled.spatioTemporalMode = st === "true";
+        const cn = localStorage.getItem(LS_CONNECTED_NARRATIVE_MODE);
+        settings.enabled.connectedNarrativeMode = cn === "true";
 
         for (let i = 0; i < TIERS_MATRIX[tierIdx].length; i++) {
             const questionType = ORDERED_QUESTION_TYPES[i];
@@ -372,6 +378,13 @@ export class SyllogimousService {
         }
 
         const randomQuestion = pickUniqueItems(choices, 1).picked[0]();
+
+        // Attach connected narrative if enabled
+        if (settings.enabled.connectedNarrativeMode && randomQuestion.premises?.length) {
+            const narrative = buildConnectedNarrative(randomQuestion.premises);
+            randomQuestion.premises = [narrative];
+        }
+
         this.logger.info("Random question", randomQuestion);
         return randomQuestion;
     }

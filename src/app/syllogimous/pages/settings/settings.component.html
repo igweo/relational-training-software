@@ -211,6 +211,26 @@
                 </div>
             </div>
         </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header py-2 small">Connected narrative</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="connectedNarrativeMode"
+                        [formControl]="connectedNarrativeMode"
+                    >
+                    <label class="form-check-label" for="connectedNarrativeMode">
+                        Build a connected narrative paragraph from premises
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">
+                    Produces a single paragraph that chains premises using relative clauses and domain-aware connectors
+                </div>
+            </div>
+        </div>
     </div>
 
     <div footer class="playcard-toolbar">
