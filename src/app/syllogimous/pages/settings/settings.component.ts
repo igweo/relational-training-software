@@ -5,7 +5,7 @@ import { FormControl } from '@angular/forms';
 import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_UP_THRESHOLD, DEFAULT_TRAINING_UNIT_LENGTH, DEFAULT_WEEKLY_GOAL, ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_IMAGE_MODE } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { EnumQuestionType } from '../../constants/question.constants';
 import { areSettingsInvalid, Settings } from '../../models/settings.models';
@@ -28,6 +28,7 @@ export class SettingsComponent {
 
     speechMode = new FormControl(false);
     visualMode = new FormControl(false);
+    imageMode = new FormControl(false);
     graphArrangementMode = new FormControl(true);
     spatioTemporalMode = new FormControl(false);
     connectedNarrativeMode = new FormControl(false);
@@ -75,6 +76,12 @@ export class SettingsComponent {
         this.visualMode.setValue(visualModeStored === null ? false : visualModeStored === "true");
         this.visualMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_VISUAL_MODE, String(v)));
+
+        // Image mode
+        const imageModeStored = localStorage.getItem(LS_IMAGE_MODE);
+        this.imageMode.setValue(imageModeStored === null ? false : imageModeStored === "true");
+        this.imageMode.valueChanges
+            .subscribe(v => localStorage.setItem(LS_IMAGE_MODE, String(v)));
 
         // Graph arrangement mode
         const graphArrangementModeStored = localStorage.getItem(LS_GRAPH_ARRANGEMENT_MODE);

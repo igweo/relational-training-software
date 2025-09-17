@@ -169,6 +169,21 @@
                 <div class="small text-muted mt-1">
                     Transforms text into visuospatial symbols: 🔴🟠🟡🟢🔵 ⬛⬜🟥🟦 🔺🔻🔶🔷
                 </div>
+                <hr class="my-2">
+                <div class="form-check">
+                    <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="imageMode"
+                        [formControl]="imageMode"
+                    >
+                    <label class="form-check-label" for="imageMode">
+                        Enable image mode (replace entities with random images)
+                    </label>
+                </div>
+                <div class="small text-muted mt-1">
+                    Renders subjects as small images from the web (deterministic per subject).
+                </div>
             </div>
         </div>
 

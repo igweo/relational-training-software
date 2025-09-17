@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { VisualService } from '../../syllogimous/services/visual.service';
 import { GlyphGeneratorService, GlyphOptions } from '../../syllogimous/services/glyph-generator.service';
+import { LS_IMAGE_MODE } from '../../syllogimous/constants/local-storage.constants';
 
 @Pipe({
   name: 'visualTransform'
@@ -15,7 +16,10 @@ export class VisualTransformPipe implements PipeTransform {
   ) {}
 
   transform(value: string | string[], visualMode: boolean = false): SafeHtml {
-    if (!value || !visualMode) {
+    const imageMode = localStorage.getItem(LS_IMAGE_MODE) === 'true';
+    const shouldTransform = !!visualMode || imageMode;
+
+    if (!value || !shouldTransform) {
       const fallbackValue = Array.isArray(value) ? value.join(' ') : (value || '');
       return this.sanitizer.bypassSecurityTrustHtml(fallbackValue);
     }
@@ -23,7 +27,9 @@ export class VisualTransformPipe implements PipeTransform {
     try {
       // Handle string arrays by joining them
       const stringValue = Array.isArray(value) ? value.join(' ') : value;
-      const transformedHtml = this.transformToVisualHtml(stringValue);
+      const transformedHtml = imageMode
+        ? this.transformToImageHtml(stringValue)
+        : this.transformToVisualHtml(stringValue);
       return this.sanitizer.bypassSecurityTrustHtml(transformedHtml);
     } catch (error) {
       console.error('Error transforming visual content:', error);
@@ -57,6 +63,31 @@ export class VisualTransformPipe implements PipeTransform {
     result = this.transformStandaloneWords(result);
 
     return result;
+  }
+
+  private transformToImageHtml(html: string): string {
+    if (!html) return html;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    const subjectSpans = tempDiv.querySelectorAll('span.subject');
+
+    subjectSpans.forEach(span => {
+      const subject = span.textContent?.trim() || '';
+      if (!subject) return;
+      const imgTag = this.buildSeededImageTag(subject);
+      span.innerHTML = imgTag;
+    });
+
+    return tempDiv.innerHTML;
+  }
+
+  private buildSeededImageTag(seed: string): string {
+    // Deterministic per subject using picsum seed
+    const url = `https://picsum.photos/seed/${encodeURIComponent(seed)}/28/28`;
+    const alt = seed.replace(/"/g, '"');
+    return `<img src="${url}" alt="${alt}" style="display: inline-block; width: 1.4em; height: 1.4em; vertical-align: middle; margin: 0 2px; border-radius: 4px; object-fit: cover;" class="image-entity" />`;
   }
 
   private getGlyphImage(word: string): string {

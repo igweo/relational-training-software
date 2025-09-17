@@ -109,16 +109,17 @@ export class ProgressAndPerformanceService {
     }
 
     getTrainingUnit(type: EnumQuestionType) {
-        const ls = localStorage.getItem(LS_TRAINING_UNIT + type);
-        if (!ls) {
-            return {
-                premises: QUESTION_TYPE_SETTING_PARAMS[type].minNumOfPremises,
-                right: 0,
-                timeout: 0,
-                wrong: 0
-            };
-        }
-        return JSON.parse(ls) as ITrainingUnit;
+      const ls = localStorage.getItem(LS_TRAINING_UNIT + type);
+      if (!ls) {
+          const { minNumOfPremises, maxNumOfPremises } = QUESTION_TYPE_SETTING_PARAMS[type];
+          return {
+              premises: Math.max(minNumOfPremises, Math.min(maxNumOfPremises, minNumOfPremises + 1)),
+              right: 0,
+              timeout: 0,
+              wrong: 0
+          };
+      }
+      return JSON.parse(ls) as ITrainingUnit;
     }
 
     getAllTrainingUnits() {

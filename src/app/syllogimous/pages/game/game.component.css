@@ -14,10 +14,11 @@
     width: 100%;
     left: 0;
     top: 0;
+    z-index: 1000;
 }
 
-.timerbar {
-    height: 1.25rem;
+.timerbar.progress {
+    height: 1.25rem !important;
 }
 
 .premises,

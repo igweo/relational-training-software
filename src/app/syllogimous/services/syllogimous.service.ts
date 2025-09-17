@@ -468,15 +468,55 @@ export class SyllogimousService {
                 }
             }
 
-            // Adjust tier based on score
+            // Adjust tier based on score with dynamic multiplier (catch-up + performance-based)
             const currTier = this.tier;
+
+            // Compute recent performance and streak for catch-up logic
+            const recentHistory = this.questions
+                .filter(q => q.playgroundMode === this.question.playgroundMode);
+            const recentWindow = recentHistory.slice(0, 10);
+            const answeredRecent = recentWindow.filter(q => q.userAnswer !== undefined);
+            const recentAccuracy = answeredRecent.length
+                ? (answeredRecent.filter(q => q.userAnswer === q.isValid).length / answeredRecent.length)
+                : 0;
+            let correctStreak = 0;
+            for (const q of recentHistory) {
+                if (q.userAnswer === q.isValid) {
+                    correctStreak++;
+                } else {
+                    break;
+                }
+            }
+
+            // Base points per tier
+            const baseInc = TIER_SCORE_ADJUSTMENTS[this.tier].increment;
+            const baseDec = TIER_SCORE_ADJUSTMENTS[this.tier].decrement;
+
+            // Difficulty bonus: premises count beyond 2, negations, meta-relations
+            const premisesBonus = Math.max(0, (this.question.premises?.length || 0) - 2) * 0.05;
+            const negationBonus = (this.question.negations || 0) * 0.05;
+            const metaRelBonus = (this.question.metaRelations || 0) * 0.05;
+            const difficultyBonus = Math.min(0.4, premisesBonus + negationBonus + metaRelBonus);
+
+            // Streak bonus: +10% per additional correct up to +50%
+            const streakBonus = Math.min(0.5, Math.max(0, correctStreak - 0) * 0.1);
+
+            // Catch-up bonus: if recent accuracy is low, successful answers get a boost
+            const catchUpBonus = (recentAccuracy > 0 && recentAccuracy <= 0.4) ? 0.25 : 0;
+
+            // Total multiplier when correct
+            const totalMultiplier = 1 + difficultyBonus + streakBonus + catchUpBonus;
 
             let ds = 0;
             if (isQuestionValid) {
-                this.score += TIER_SCORE_ADJUSTMENTS[this.tier].increment;
+                const gained = Math.max(1, Math.round(baseInc * totalMultiplier));
+                this.score += gained;
                 ds += 1;
             } else {
-                this.score = Math.max(0, this.score - TIER_SCORE_ADJUSTMENTS[this.tier].decrement);
+                // Softer penalty if struggling recently
+                const penaltyFactor = (recentAccuracy > 0 && recentAccuracy <= 0.4) ? 0.8 : 1.0;
+                const loss = Math.max(1, Math.round(baseDec * penaltyFactor));
+                this.score = Math.max(0, this.score - loss);
                 if (this.score > 0) {
                     ds -= 1;
                 }

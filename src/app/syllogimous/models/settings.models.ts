@@ -69,21 +69,20 @@ export class QuestionSettings {
     group?: EnumQuestionGroup; // Group that this question belongs to (ex. Direction, ...)
 
     constructor(params: IQuestionSettingsParams) {
-        this.minNumOfPremises = params.minNumOfPremises;
-        this.maxNumOfPremises = params.maxNumOfPremises;
-        this.basic = params.basic;
-        this.group = params.group;
+      this.minNumOfPremises = params.minNumOfPremises;
+      this.maxNumOfPremises = params.maxNumOfPremises;
+      this.basic = params.basic;
+      this.group = params.group;
 
-        // Some props are immutable because they are user for validation
-        this.freezeProp("minNumOfPremises");
-        this.freezeProp("maxNumOfPremises");
-        this.freezeProp("basic");
-        this.freezeProp("group");
-        
-        this.enabled = params.enabled;
-        this.setNumOfPremises(params.numOfPremises || params.minNumOfPremises);
-    }
-    
+      // Some props are immutable because they are user for validation
+      this.freezeProp("minNumOfPremises");
+      this.freezeProp("maxNumOfPremises");
+      this.freezeProp("basic");
+      this.freezeProp("group");
+      
+      this.enabled = params.enabled;
+      this.setNumOfPremises((params.numOfPremises ?? (params.minNumOfPremises + 1)));
+  }
     freezeProp(prop: string) {
         Object.defineProperty(this, prop, { configurable: false, writable: false });
     }

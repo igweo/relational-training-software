@@ -8,7 +8,7 @@ import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_IMAGE_MODE } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 
@@ -41,6 +41,11 @@ export class GameComponent {
     // Visual mode state
     get isVisualModeEnabled(): boolean {
         return localStorage.getItem(LS_VISUAL_MODE) === "true";
+    }
+
+    // Image mode state (used by visualTransform pipe internally via LS_IMAGE_MODE)
+    get isImageModeEnabled(): boolean {
+        return localStorage.getItem(LS_IMAGE_MODE) === "true";
     }
 
     constructor(
