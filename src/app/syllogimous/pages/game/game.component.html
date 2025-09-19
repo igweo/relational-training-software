@@ -36,7 +36,7 @@
                     </div>
                 </ng-template>
 
-                <ng-template ngbSlide *ngFor="let p of sylSrv.question.premises; let i = index; let last = last;">
+                <ng-template ngbSlide *ngFor="let p of shuffledPremises; let i = index; let last = last;">
                     <div style="display: grid; place-items: center;">
                         <div>
                             <small class="text-muted">{{last ? "Last premise" : "Premise " + (i + 1)}}</small>
@@ -127,7 +127,7 @@
                 <!-- Always show question content first -->
                 <div *ngIf="!entityAudioMode; else entityOnlyPremisesBlock">
                     <div class="small text-muted">Premises</div>
-                    <div class="premises" *ngIf="sylSrv.question.premises as premises">
+                    <div class="premises" *ngIf="shuffledPremises as premises">
                         <div *ngFor="let p of premises" [innerHTML]="p | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </div>

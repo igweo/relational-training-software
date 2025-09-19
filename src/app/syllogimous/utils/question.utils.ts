@@ -555,8 +555,8 @@ export function diversifyComparisonConclusion(
                 const isMoreOrAfter = coinFlip();
                 const relation = getRelation(settings, type, isMoreOrAfter);
                 
-                // For adjacent elements, the relationship depends on sign and order
-                const actualMore = sign === 1 ? startIdx < startIdx + 1 : startIdx > startIdx + 1;
+                // For chronological/numerical: "more/after" means left index > right index when sign === 1
+                const actualMore = sign === 1 ? startIdx > (startIdx + 1) : startIdx < (startIdx + 1);
                 
                 return {
                     conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
@@ -579,7 +579,7 @@ export function diversifyComparisonConclusion(
                 const isMoreOrAfter = coinFlip();
                 const relation = getRelation(settings, type, isMoreOrAfter);
                 
-                const actualMore = sign === 1 ? startIdx < endIdx : startIdx > endIdx;
+                const actualMore = sign === 1 ? startIdx > endIdx : startIdx < endIdx;
                 
                 return {
                     conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
@@ -619,7 +619,7 @@ export function diversifyComparisonConclusion(
                 const elem1 = orderedElements[startIdx];
                 const elem2 = orderedElements[startIdx + 1];
                 // Choose a relation that is actually true for adjacent pair given sign
-                const actualMore = sign === 1 ? true : false;
+                const actualMore = sign === 1 ? false : true;
                 const relation = getRelation(settings, type, actualMore);
                 return {
                     conclusion: `<span class="subject">${elem1}</span> is ${relation} <span class="subject">${elem2}</span>`,
@@ -823,6 +823,37 @@ export function horizontalShuffleArrangement(premises: IArrangementPremise[]) {
                 }
                 
                 // Enhanced directional relationships
+                // Circular: invert clockwise/counterclockwise variants on subject swap
+                case EnumArrangements.IsClockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsCounterclockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsCounterclockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsClockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsImmediatelyClockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsImmediatelyCounterclockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsImmediatelyCounterclockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsImmediatelyClockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsNStepsClockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsNStepsCounterclockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
+                case EnumArrangements.IsNStepsCounterclockwiseOf: {
+                    premise.relationship.description = EnumArrangements.IsNStepsClockwiseOf;
+                    switchSubjects(premise);
+                    break;
+                }
                 case EnumArrangements.IsPositionedLeftOf: {
                     premise.relationship.description = EnumArrangements.IsPositionedRightOf;
                     switchSubjects(premise);
@@ -1224,10 +1255,14 @@ export function interpolateArrangementRelationship(relationship: IArrangementRel
     );
 
     if (settings.enabled.negation && coinFlip()) {
-        // TODO: This method should return the number of negations applied
-        return interpolatedWithSteps.replaceAll(/(left|right)/gi, substr =>
-            `<span class="is-negated">${(substr === "left") ? "right" : "left"}</span>`
-        );
+        // Flip left/right and clockwise/counterclockwise under negation
+        return interpolatedWithSteps
+            .replaceAll(/(left|right)/gi, substr =>
+                `<span class="is-negated">${(substr.toLowerCase() === "left") ? "right" : "left"}</span>`
+            )
+            .replaceAll(/(clockwise|counterclockwise)/gi, substr =>
+                `<span class="is-negated">${(substr.toLowerCase() === "clockwise") ? "counterclockwise" : "clockwise"}</span>`
+            );
     }
 
     return interpolatedWithSteps;
@@ -1585,7 +1620,31 @@ export function shuffleWithinPremiseOrder(premises: string[]): string[] {
                 'is north of': 'is south of',
                 'is south of': 'is north of',
                 'is east of': 'is west of',
-                'is west of': 'is east of'
+                'is west of': 'is east of',
+                // Inclusion/Exclusion inversions (comprehensive)
+                // Core
+                'inside': 'outside',
+                'outside': 'inside',
+                'within': 'not within',
+                'not within': 'within',
+                'contained in': 'not contained in',
+                'not contained in': 'contained in',
+                // Synonyms from InclusionExclusion variants
+                'contained within': 'not contained in',
+                'enclosed by': 'not inside',
+                'nested in': 'not inside',
+                'housed in': 'not inside',
+                'included in': 'excluded from',
+                'excluded from': 'included in',
+                'part of': 'separate from',
+                'separate from': 'part of',
+                'apart from': 'part of',
+                'distinct from': 'part of',
+                'independent of': 'part of',
+                'belongs to': 'separate from',
+                'encompassed by': 'outside',
+                'is inside': 'outside', // defensive: some relations may include leading 'is'
+                'is outside': 'inside'
             };
             
             const inverseRelation = inverseRelations[relation];

@@ -26,6 +26,7 @@ export class GameComponent {
     trueButtonToTheRight = false;
     selectedOption: string | null = null;
     selectedOptionIndex: number | null = null;
+    shuffledPremises: string[] = [];
     
     // Graph arrangement state
     showGraphModal = false;
@@ -83,6 +84,9 @@ export class GameComponent {
         let questionPremises = this.sylSrv.question.premises;
         let conclusion = this.sylSrv.question.conclusion;
         const conclusionFormatted = Array.isArray(conclusion) ? conclusion : [conclusion];
+
+        // Randomize premise display order (view-only)
+        this.shuffledPremises = this.shuffleArray([...(questionPremises || [])]);
         
         // Check if speech mode is enabled before using text-to-speech
         const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";
@@ -464,5 +468,15 @@ export class GameComponent {
     kickTimer = async () => {
         await this.gameTimerService.start(this.timerTimeSeconds);
         this.sylSrv.checkQuestion();
+    }
+
+    private shuffleArray<T>(array: T[]): T[] {
+        let currentIndex = array.length;
+        while (currentIndex !== 0) {
+            const randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
     }
 }

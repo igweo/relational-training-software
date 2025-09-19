@@ -169,7 +169,7 @@ export enum EnumArrangements {
     IsStructuredAt = "is structured at",
     
     // Enhanced linear relationships - Relative distance
-    IsWithinReachOIsWithinReachOff = "is within reach of",
+    IsWithinReachOf = "is within reach of",
     IsBeyondReachOf = "is beyond reach of",
     IsAccessibleTo = "is accessible to",
     IsInaccessibleTo = "is inaccessible to",

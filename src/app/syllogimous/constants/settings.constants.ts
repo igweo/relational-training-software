@@ -118,6 +118,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     visualMode: false,
     spatioTemporalMode: false,
     connectedNarrativeMode: false,
+    inclusionExclusionOnlyMode: false,
     graphArrangementMode: true,
     binary: {
         and: true,

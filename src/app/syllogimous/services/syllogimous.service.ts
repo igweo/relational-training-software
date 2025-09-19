@@ -354,6 +354,9 @@ export class SyllogimousService {
             EnumQuestionType.ComparisonChronological,
         ];
 
+        // Optional filter: inclusion/exclusion only mode
+        const inclusionExclusionOnly = !!settings.enabled.inclusionExclusionOnlyMode;
+
         // Pick one question from each group so that the distribution is uniform
         // The "isUndefinedGroup" predicate is used to push all ungrouped question into choices
         for (const grouped of groupsOfQuestions) {
@@ -361,6 +364,9 @@ export class SyllogimousService {
             const groupChoices: Array<() => Question> = isUndefinedGroup ? choices : [];
             for (const [qt, qs] of grouped) {
                 if (onlySpatioTemporal && !spatioTemporalAllowed.includes(qt)) {
+                    continue;
+                }
+                if (inclusionExclusionOnly && qt !== EnumQuestionType.InclusionExclusion) {
                     continue;
                 }
                 const shouldIncludeQuestion = (basic == undefined) ? true : qs.basic === basic;
