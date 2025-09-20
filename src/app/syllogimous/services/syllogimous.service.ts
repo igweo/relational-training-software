@@ -3,7 +3,7 @@ import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Qu
 import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant, buildConnectedNarrative } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
-import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE } from "../constants/local-storage.constants";
+import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_HIDE_INSTRUCTIONS } from "../constants/local-storage.constants";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ModalLevelChangeComponent } from "../components/modal-level-change/modal-level-change.component";
 import { Router } from "@angular/router";
@@ -96,6 +96,8 @@ export class SyllogimousService {
         settings.enabled.spatioTemporalMode = st === "true";
         const cn = localStorage.getItem(LS_CONNECTED_NARRATIVE_MODE);
         settings.enabled.connectedNarrativeMode = cn === "true";
+        const ieOnly = localStorage.getItem(LS_INCLUSION_EXCLUSION_ONLY_MODE);
+        settings.enabled.inclusionExclusionOnlyMode = ieOnly === "true";
 
         for (let i = 0; i < TIERS_MATRIX[tierIdx].length; i++) {
             const questionType = ORDERED_QUESTION_TYPES[i];
@@ -371,7 +373,13 @@ export class SyllogimousService {
                 }
                 const shouldIncludeQuestion = (basic == undefined) ? true : qs.basic === basic;
                 if (qs.enabled && shouldIncludeQuestion) {
-                    groupChoices.push(this.getCreateFn(qt, qs.clampNumOfPremises(numOfPremises || qs.getNumOfPremises())));
+                    const createFn = this.getCreateFn(qt, qs.clampNumOfPremises(numOfPremises || qs.getNumOfPremises()));
+                    groupChoices.push(createFn);
+                    // Slightly increase Inclusion/Exclusion appearance probability
+                    if (qt === EnumQuestionType.InclusionExclusion) {
+                        groupChoices.push(createFn);
+                        groupChoices.push(createFn);
+                    }
                 }
             }
             if (!isUndefinedGroup && groupChoices.length) {
@@ -407,7 +415,8 @@ export class SyllogimousService {
         if (this.playgroundSettings) {
             this.router.navigate([EnumScreens.Game]);
         } else {
-            if (!localStorage.getItem(LS_DONT_SHOW + this.question.type)) {
+            const skipTutorial = localStorage.getItem(LS_HIDE_INSTRUCTIONS) === "true";
+            if (!skipTutorial && !localStorage.getItem(LS_DONT_SHOW + this.question.type)) {
                 this.router.navigate([EnumScreens.Tutorial, this.question.type]);
             } else {
                 this.router.navigate([EnumScreens.Game]);

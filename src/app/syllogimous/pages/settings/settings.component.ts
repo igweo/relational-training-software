@@ -5,7 +5,7 @@ import { FormControl } from '@angular/forms';
 import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_UP_THRESHOLD, DEFAULT_TRAINING_UNIT_LENGTH, DEFAULT_WEEKLY_GOAL, ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_IMAGE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_IMAGE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_AUTO_CAROUSEL } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { EnumQuestionType } from '../../constants/question.constants';
 import { areSettingsInvalid, Settings } from '../../models/settings.models';
@@ -34,6 +34,7 @@ export class SettingsComponent {
     connectedNarrativeMode = new FormControl(false);
     inclusionExclusionOnlyMode = new FormControl(false);
     hideInstructions = new FormControl(false);
+    autoCarousel = new FormControl(false);
 
     constructor(
         public router: Router,
@@ -113,6 +114,12 @@ export class SettingsComponent {
         this.hideInstructions.setValue(hideInstructionsStored === null ? false : hideInstructionsStored === "true");
         this.hideInstructions.valueChanges
             .subscribe(v => localStorage.setItem(LS_HIDE_INSTRUCTIONS, String(v)));
+
+        // Auto carousel flag
+        const autoCarouselStored = localStorage.getItem(LS_AUTO_CAROUSEL);
+        this.autoCarousel.setValue(autoCarouselStored === null ? false : autoCarouselStored === "true");
+        this.autoCarousel.valueChanges
+            .subscribe(v => localStorage.setItem(LS_AUTO_CAROUSEL, String(v)));
     }
 
     getQuestionTypes(): EnumQuestionType[] {

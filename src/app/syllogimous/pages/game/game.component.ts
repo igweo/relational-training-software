@@ -8,7 +8,7 @@ import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_IMAGE_MODE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_IMAGE_MODE, LS_AUTO_CAROUSEL } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 
@@ -27,6 +27,7 @@ export class GameComponent {
     selectedOption: string | null = null;
     selectedOptionIndex: number | null = null;
     shuffledPremises: string[] = [];
+    autoCarouselInterval = 999999999;
     
     // Graph arrangement state
     showGraphModal = false;
@@ -61,6 +62,10 @@ export class GameComponent {
         this.timerType = localStorage.getItem(LS_TIMER) || '0';
         this.gameMode = localStorage.getItem(LS_GAME_MODE) || '0';
         this.trueButtonToTheRight = Math.random() > 0.5;
+
+        // Auto carousel interval
+        const autoCarouselEnabled = localStorage.getItem(LS_AUTO_CAROUSEL) === 'true';
+        this.autoCarouselInterval = autoCarouselEnabled ? 4000 : 999999999;
 
         if (this.sylSrv.question.conclusion === "!") {
             this.router.navigate([EnumScreens.Start]);
