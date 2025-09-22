@@ -1842,37 +1842,87 @@ export class SyllogimousService {
       const usedPairs = new Set<string>();
       const keyFor = (x: string, y: string) => [x, y].sort().join("|");
 
+      // Maintain a live inclusion graph to prevent cycles (A ⊂ B and B ⊂ A)
+      const inclusionGraph = new Map<string, Set<string>>();
+      const hasPath = (from: string, to: string, visited = new Set<string>()): boolean => {
+          if (from === to) return true;
+          if (visited.has(from)) return false;
+          visited.add(from);
+          const nexts = inclusionGraph.get(from);
+          if (!nexts) return false;
+          for (const n of nexts) {
+              if (hasPath(n, to, visited)) return true;
+          }
+          return false;
+      };
+      const addInclusionEdge = (from: string, to: string) => {
+          if (!inclusionGraph.has(from)) inclusionGraph.set(from, new Set());
+          inclusionGraph.get(from)!.add(to);
+      };
+
       while (relationships.length < numOfPremises) {
           const [a, b] = pickUniqueItems(question.bucket, 2).picked;
           const k = keyFor(a, b);
           if (usedPairs.has(k)) continue;
           usedPairs.add(k);
 
-          const isIncluded = coinFlip();
+          let isIncluded = coinFlip();
+          if (isIncluded) {
+              // Prevent cycles: if B reaches A already, A⊂B would form a cycle; fallback to exclusion
+              if (hasPath(b, a)) {
+                  isIncluded = false;
+              } else {
+                  addInclusionEdge(a, b);
+              }
+          }
           relationships.push({ a, b, isIncluded });
       }
 
       question.premises = relationships.map(({ a, b, isIncluded }) => {
-          const relation = getRelation(settings, type, isIncluded);
-          // randomize visible order
-          const flip = coinFlip();
-          const left = flip ? a : b;
-          const right = flip ? b : a;
-          return `<span class="subject">${left}</span> is ${relation} <span class="subject">${right}</span>`;
+          // Preserve semantics if we flip the visible order
+          if (isIncluded) {
+              // Base orientation: a ⊂ b → "a is included in b" or flip to container-verb form
+              const flip = coinFlip();
+              const left = flip ? b : a;
+              const right = flip ? a : b;
+              const { text, needsCopula } = getRelationRich(
+                  settings,
+                  type,
+                  true,
+                  /* preferVerb */ flip
+              );
+              const base = needsCopula
+                  ? `<span class="subject">${left}</span> is ${text} <span class="subject">${right}</span>`
+                  : `<span class="subject">${left}</span> ${text} <span class="subject">${right}</span>`;
+              const whichVariant = buildWhichClauseVariant(left, text, right);
+              return (whichVariant && coinFlip()) ? whichVariant : base;
+          } else {
+              // Exclusion is symmetric; use PP forms
+              const flip = coinFlip();
+              const left = flip ? b : a;
+              const right = flip ? a : b;
+              const { text, needsCopula } = getRelationRich(
+                  settings,
+                  type,
+                  false,
+                  /* preferVerb */ false
+              );
+              const base = needsCopula
+                  ? `<span class="subject">${left}</span> is ${text} <span class="subject">${right}</span>`
+                  : `<span class="subject">${left}</span> ${text} <span class="subject">${right}</span>`;
+              const whichVariant = buildWhichClauseVariant(left, text, right);
+              return (whichVariant && coinFlip()) ? whichVariant : base;
+          }
       });
 
       // Conclusion: pick two and compute inclusion truth; then choose relation independently
       const [ca, cb] = pickUniqueItems(question.bucket, 2).picked;
 
       const insideTruth = (() => {
-          const inclusionGraph = new Map<string, Set<string>>();
+          // inclusionGraph already has only non-cycling edges from the build step
           const exclusion = new Set<string>();
-
           for (const { a, b, isIncluded } of relationships) {
-              if (isIncluded) {
-                  if (!inclusionGraph.has(a)) inclusionGraph.set(a, new Set());
-                  inclusionGraph.get(a)!.add(b);
-              } else {
+              if (!isIncluded) {
                   exclusion.add(keyFor(a, b));
               }
           }
@@ -1894,20 +1944,25 @@ export class SyllogimousService {
       })();
 
       // Pick how to phrase the conclusion independently of truth
-      const showPositive = coinFlip(); // true -> "inside", false -> "outside"
-      const rel = getRelation(settings, type, showPositive);
+      const showPositive = coinFlip();
+      const relRich = getRelationRich(settings, type, showPositive, /* preferVerb */ false);
+      const whichVariantConclusion = buildWhichClauseVariant(ca, relRich.text, cb);
+      const conclusionText = relRich.needsCopula
+          ? `<span class="subject">${ca}</span> is ${relRich.text} <span class="subject">${cb}</span>`
+          : `<span class="subject">${ca}</span> ${relRich.text} <span class="subject">${cb}</span>`;
 
       // Evaluate the displayed statement's truth
       question.isValid = showPositive ? insideTruth : !insideTruth;
 
-      question.conclusion = `<span class="subject">${ca}</span> is ${rel} <span class="subject">${cb}</span>`;
+      question.conclusion = whichVariantConclusion && coinFlip() ? whichVariantConclusion : conclusionText;
 
       question.instructions = [
           "Use inclusion/exclusion logic (containment vs outside) to judge the conclusion."
       ];
 
       shuffle(question.premises);
-      question.premises = shuffleWithinPremiseOrder(question.premises);
+      // Avoid within-premise order shuffling for Inclusion/Exclusion to preserve directionality
+      // question.premises = shuffleWithinPremiseOrder(question.premises);
 
       return question;
   }

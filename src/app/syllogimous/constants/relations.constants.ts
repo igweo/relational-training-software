@@ -98,8 +98,19 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.SouthOf]: { opposite: RelationKey.NorthOf, domains: ["spatial"], asPP: ["south of"], asVerb: [] },
     [RelationKey.EastOf]: { opposite: RelationKey.WestOf, domains: ["spatial"], asPP: ["east of"], asVerb: [] },
     [RelationKey.WestOf]: { opposite: RelationKey.EastOf, domains: ["spatial"], asPP: ["west of"], asVerb: [] },
-    [RelationKey.Inside]: { opposite: RelationKey.Outside, domains: ["spatial"], asPP: ["inside"], asVerb: ["contains", "encloses"] },
-    [RelationKey.Outside]: { opposite: RelationKey.Inside, domains: ["spatial"], asPP: ["outside"], asVerb: ["excludes"] },
+    [RelationKey.Inside]: { opposite: RelationKey.Outside, domains: ["spatial"], asPP: [
+        "included in", "contained within", "within", "inside", "enclosed by", "nested in", "housed in",
+        "part of", "under", "covered by", "under the umbrella of", "falls under",
+        "subsumed by", "a subset of", "a proper subset of", "a subcollection of",
+        "a subtype of", "a subclass of", "a special case of"
+    ], asVerb: ["contains", "encloses", "subsumes", "includes", "covers", "embraces", "houses"] },
+    [RelationKey.Outside]: { opposite: RelationKey.Inside, domains: ["spatial"], asPP: [
+        "excluded from", "not contained in", "outside", "separate from", "apart from",
+        "distinct from", "independent of", "not inside", "not within",
+        "not a subset of", "disjoint from", "shares no elements with",
+        "has empty intersection with", "mutually exclusive with",
+        "outside the scope of", "not covered by", "not under"
+    ], asVerb: ["excludes", "omits", "rules out", "precludes", "separates from", "keeps apart from"] },
     [RelationKey.Between]: { domains: ["spatial"], asPP: ["between"], asVerb: [] },
     [RelationKey.Beside]: { domains: ["spatial"], asPP: ["beside"], asVerb: ["abuts"] },
     [RelationKey.Near]: { opposite: RelationKey.Far, domains: ["spatial"], asPP: ["near", "close to"], asVerb: ["approaches"] },

@@ -398,11 +398,17 @@ export const expressionVariants = {
     positive: [
       "is included in", "is contained within", "is part of", "belongs to",
       "is encompassed by", "is within", "is inside", "is enclosed by",
-      "is nested in", "is housed in"
+      "is nested in", "is housed in",
+      "is a subset of", "is a proper subset of", "is subsumed by",
+      "falls under", "is covered by", "is under the umbrella of",
+      "is a subtype of", "is a subclass of", "is a special case of"
     ],
     negative: [
       "is excluded from", "is not contained in", "is outside", "is separate from",
-      "is apart from", "is distinct from", "is independent of", "is not inside"
+      "is apart from", "is distinct from", "is independent of", "is not inside", "is not within",
+      "is not a subset of", "is disjoint from", "shares no elements with",
+      "has empty intersection with", "is mutually exclusive with",
+      "is outside the scope of", "is not covered by", "is not under"
     ]
   }
 };
@@ -1492,6 +1498,13 @@ export function buildWhichClauseVariant(left: string, relationHtml: string, righ
     const rootWith = endsWith('with');
     if (rootWith) {
         return `${subj(right)} is the one with which ${subj(left)} is${negWord} ${rootWith}`;
+    }
+
+    // Handle logical/mereological/of-phrases (subset/part/kind/etc.)
+    const ofLogicalMatch = lc.match(/\b(subset of|proper subset of|part of|member of|element of|subclass of|subtype of|special case of|instance of)\b$/);
+    if (ofLogicalMatch) {
+        const phrase = ofLogicalMatch[1];
+        return `${subj(right)} is the one of which ${subj(left)} is${negWord} ${phrase}`;
     }
 
     // Directional/flow "… of"
