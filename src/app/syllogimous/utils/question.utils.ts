@@ -37,13 +37,15 @@ export function pickUniqueItems<T>(array: T[], n: number): Picked<T> {
 }
 
 export function shuffle<T>(array: T[]) {
-    let currentIndex = array.length, randomIndex;
+    // Make shuffle non-mutating to avoid side-effects on shared references
+    const a = [...array];
+    let currentIndex = a.length, randomIndex;
     while (currentIndex != 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        [a[currentIndex], a[randomIndex]] = [a[randomIndex], a[currentIndex]];
     }
-    return array;
+    return a;
 }
 
 export function getRandomRuleValid() {

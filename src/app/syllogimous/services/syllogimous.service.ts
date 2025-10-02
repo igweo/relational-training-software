@@ -605,7 +605,7 @@ export class SyllogimousService {
             question.premises.push(getSyllogism(settings, "#####", p, m, getRandomRuleInvalid())[0]);
         }
 
-        shuffle(question.premises);
+        question.premises = shuffle(question.premises);
 
         return question;
     }
@@ -682,7 +682,7 @@ export class SyllogimousService {
           question.isValid = diversifiedConclusion.isValid;
       } while (isPremiseLikeConclusion(question.premises, question.conclusion));
 
-      shuffle(question.premises);
+      question.premises = shuffle(question.premises);
 
       return question;
   }
@@ -735,7 +735,7 @@ export class SyllogimousService {
             question.isValid = diversifiedConclusion.isValid;
         } while (isPremiseLikeConclusion(question.premises, question.conclusion));
 
-        shuffle(question.premises);
+        question.premises = shuffle(question.premises);
 
         return question;
     }
@@ -806,7 +806,7 @@ export class SyllogimousService {
         }
 
         horizontalShuffleArrangement(premises);
-        shuffle(premises);
+        premises = shuffle(premises);
         metarelateArrangement(premises);
 
         let b: string | undefined = undefined;
@@ -1054,11 +1054,11 @@ export class SyllogimousService {
             return `<span class="subject">${p.pair[1][0]}</span> is ${invertedRel} of <span class="subject">${p.pair[0][0]}</span>`;
         };
 
-        shuffle(premises);
+        const shuffledPremises = shuffle(premises);
         question.isValid = isValid;
-        question.premises = premises.map(stringifyProposition);
-        if (coinFlip() && premises.length) {
-            const premiseToRepeat = pickUniqueItems(premises, 1).picked[0];
+        question.premises = shuffledPremises.map(stringifyProposition);
+        if (coinFlip() && shuffledPremises.length) {
+            const premiseToRepeat = pickUniqueItems(shuffledPremises, 1).picked[0];
             question.isValid = true;
             question.conclusion = stringifyProposition(premiseToRepeat);
         } else {
@@ -1335,11 +1335,11 @@ export class SyllogimousService {
             return `<span class="subject">${p.pair[0][0]}</span> is ${relationship} of <span class="subject">${p.pair[1][0]}</span>`;
         };
 
-        shuffle(premises);
+        const shuffledPremises3D = shuffle(premises);
         question.isValid = isValid;
-        question.premises = premises.map(stringifyProposition);
-        if (coinFlip() && premises.length) {
-            const premiseToRepeat = pickUniqueItems(premises, 1).picked[0];
+        question.premises = shuffledPremises3D.map(stringifyProposition);
+        if (coinFlip() && shuffledPremises3D.length) {
+            const premiseToRepeat = pickUniqueItems(shuffledPremises3D, 1).picked[0];
             question.isValid = true;
             question.conclusion = stringifyProposition(premiseToRepeat);
         } else {
@@ -1457,12 +1457,12 @@ export class SyllogimousService {
                 return result;
             }) as typeof edgeList;
 
-        shuffle(edgeList);
+        edgeList = shuffle(edgeList);
         edgeList = horizontalShuffle(edgeList);
         question.graphPremises = edgeList;
         this.logger.info("EdgeList", edgeList);
 
-        shuffle(edgeList2);
+        edgeList2 = shuffle(edgeList2);
         edgeList2 = horizontalShuffle(edgeList2);
         question.graphConclusion = edgeList2;
         this.logger.info("EdgeList2", edgeList2);
@@ -1802,7 +1802,7 @@ export class SyllogimousService {
             question.instructions = [fixBinaryInstructions(a), fixBinaryInstructions(b)].filter(instr => !!instr);
 
             question.premises = [...choices[0].premises, ...choices[1].premises];
-            shuffle(question.premises);
+            question.premises = shuffle(question.premises);
 
             question.conclusion = operandTemplates[operandIndex]
                 .replace("$a", Array.isArray(choices[0].conclusion) ? choices[0].conclusion[0] : choices[0].conclusion)
@@ -1960,7 +1960,7 @@ export class SyllogimousService {
           "Use inclusion/exclusion logic (containment vs outside) to judge the conclusion."
       ];
 
-      shuffle(question.premises);
+      question.premises = shuffle(question.premises);
       // Avoid within-premise order shuffling for Inclusion/Exclusion to preserve directionality
       // question.premises = shuffleWithinPremiseOrder(question.premises);
 
