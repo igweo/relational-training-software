@@ -416,6 +416,18 @@ html[darkmode] svg {
     filter: invert(1) hue-rotate(180deg);
 }
 
+/* Comparative cues for greater/less relations (subtle, non-intrusive) */
+.cue-greater {
+    transform: translateY(-2px) scale(1.06);
+    transform-origin: center;
+}
+
+.cue-less {
+    transform: translateY(1px) scale(0.96);
+    transform-origin: center;
+    opacity: 0.95;
+}
+
 /* Opacity utilities */
 .opacity-10 { opacity: 0.1; }
 .opacity-20 { opacity: 0.2; }

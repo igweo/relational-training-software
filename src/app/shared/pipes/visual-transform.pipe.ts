@@ -46,6 +46,13 @@ export class VisualTransformPipe implements PipeTransform {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
 
+    // Detect comparative cues from original html (case-insensitive)
+    const lc = html.toLowerCase();
+    const greaterRegex = /\b(greater than|more than|higher than|larger than|superior to|above)\b/;
+    const lessRegex = /\b(less than|fewer than|lower than|smaller than|inferior to|below)\b/;
+    const isGreaterRelation = greaterRegex.test(lc);
+    const isLessRelation = !isGreaterRelation && lessRegex.test(lc);
+
     // Find all subject spans and replace their content with glyphs
     const subjectSpans = tempDiv.querySelectorAll('span.subject');
     
@@ -56,6 +63,25 @@ export class VisualTransformPipe implements PipeTransform {
         span.innerHTML = glyphImg;
       }
     });
+
+    // Apply visual comparative cues when we have a simple binary comparison
+    if ((isGreaterRelation || isLessRelation) && subjectSpans.length >= 2) {
+      const first = subjectSpans[0] as HTMLElement;
+      const second = subjectSpans[1] as HTMLElement;
+      if (first && second) {
+        // Ensure spans are inline-block so transforms take effect predictably
+        first.style.display = first.style.display || 'inline-block';
+        second.style.display = second.style.display || 'inline-block';
+
+        if (isGreaterRelation) {
+          first.classList.add('cue-greater');
+          second.classList.add('cue-less');
+        } else if (isLessRelation) {
+          first.classList.add('cue-less');
+          second.classList.add('cue-greater');
+        }
+      }
+    }
 
     // Also handle any standalone words that might need transformation
     // but aren't in subject spans (preserve existing functionality)

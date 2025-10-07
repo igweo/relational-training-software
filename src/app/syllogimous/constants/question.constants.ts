@@ -34,7 +34,7 @@ export enum EnumArrangements {
     IsImmediatelyCounterclockwiseOf = "is immediately counterclockwise of",
     IsNStepsClockwiseOf = "is # steps clockwise of",
     IsNStepsCounterclockwiseOf = "is # steps counterclockwise of",
-    IsNStepsAwayFrom = "is # steps away from",
+    IsNStepsAwayFrom = "is # steps apart from",
     
     // Enhanced linear relationships - Positional
     Precedes = "precedes",

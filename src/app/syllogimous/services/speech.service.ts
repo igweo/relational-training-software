@@ -116,6 +116,16 @@ export class SpeechService {
         return s.replace(/\s+/g, ' ').trim();
     }
 
+    // Convert HTML premise/conclusion to plain speech with subject names
+    private toPlainSpeech(html: string): string {
+        let s = html;
+        s = s.replace(/<span class=\"is-negated\">(.*?)<\/span>/g, (_m, p1) => `not ${p1}`);
+        s = s.replace(/<span class=\"subject\">(.*?)<\/span>/g, (_m, p1) => p1);
+        s = s.replace(/<[^>]+>/g, '');
+        s = s.replace(/\s+/g, ' ').trim();
+        return s;
+    }
+
     // Public: narrate a question using entity indices. If speakPreface is true, it will also read the Entities list.
     async speakQuestionAsEntities(q: { premises: string[]; conclusion: string | string[] }, lang: string = 'en-US', speakPreface: boolean = false): Promise<void> {
         const premises = q.premises || [];
@@ -140,5 +150,20 @@ export class SpeechService {
         }
         // Do not read conclusions in entity mode; visuals will show them.
         return;
+    }
+
+    // Public: fully-auditory narration (premises + conclusion) using subject names
+    async speakQuestionFully(q: { premises: string[]; conclusion: string | string[] }, lang: string = 'en-US', baseRate: number = 1.0): Promise<void> {
+        const premises = q.premises || [];
+        const conclusions = Array.isArray(q.conclusion) ? q.conclusion : [q.conclusion];
+
+        for (let i = 0; i < premises.length; i++) {
+            const line = this.toPlainSpeech(premises[i]);
+            await this.speakAsync(`${line}.`, lang, baseRate);
+        }
+        for (const c of conclusions) {
+            const line = this.toPlainSpeech(c);
+            await this.speakAsync(`Conclusion: ${line}`, lang, baseRate);
+        }
     }
 }

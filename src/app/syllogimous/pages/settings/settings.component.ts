@@ -9,6 +9,7 @@ import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TE
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { EnumQuestionType } from '../../constants/question.constants';
 import { areSettingsInvalid, Settings } from '../../models/settings.models';
+import { LS_SPEECH_RATE } from '../../constants/local-storage.constants';
 
 @Component({
     selector: 'app-settings',
@@ -28,6 +29,7 @@ export class SettingsComponent {
 
     speechMode = new FormControl(false);
     visualMode = new FormControl(false);
+    speechRate = new FormControl(1);
     imageMode = new FormControl(false);
     graphArrangementMode = new FormControl(true);
     spatioTemporalMode = new FormControl(false);
@@ -72,6 +74,12 @@ export class SettingsComponent {
         this.speechMode.setValue(speechModeStored === null ? false : speechModeStored === "true");
         this.speechMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_SPEECH_MODE, String(v)));
+
+        // Speech rate
+        const speechRateStored = localStorage.getItem(LS_SPEECH_RATE);
+        this.speechRate.setValue(speechRateStored === null ? 1 : Number(speechRateStored));
+        this.speechRate.valueChanges
+            .subscribe(v => localStorage.setItem(LS_SPEECH_RATE, String(v)));
 
         // Visual mode
         const visualModeStored = localStorage.getItem(LS_VISUAL_MODE);
