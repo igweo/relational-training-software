@@ -77,8 +77,8 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.EqualTo]: { opposite: RelationKey.NotEqualTo, domains: ["numerical"], asPP: ["equal to"], asVerb: ["equals", "is equal to"] },
     [RelationKey.NotEqualTo]: { opposite: RelationKey.EqualTo, domains: ["numerical"], asPP: ["not equal to"], asVerb: ["differs from"] },
 
-    [RelationKey.Before]: { opposite: RelationKey.After, domains: ["temporal"], asPP: ["before", "earlier than", "prior to"], asVerb: ["precedes", "comes before"] },
-    [RelationKey.After]: { opposite: RelationKey.Before, domains: ["temporal"], asPP: ["after", "later than", "subsequent to"], asVerb: ["follows", "comes after"] },
+    [RelationKey.Before]: { opposite: RelationKey.After, domains: ["temporal"], asPP: ["before", "earlier than", "prior to", "upstream of", "in advance of", "ahead of"], asVerb: ["precedes", "comes before", "leads"] },
+    [RelationKey.After]: { opposite: RelationKey.Before, domains: ["temporal"], asPP: ["after", "later than", "subsequent to", "downstream of", "following"], asVerb: ["follows", "comes after", "succeeds", "trails"] },
     [RelationKey.ConcurrentWith]: { domains: ["temporal"], asPP: ["concurrent with", "at the same time as"], asVerb: ["coincides with", "overlaps with"] },
 
     [RelationKey.Since]: { domains: ["temporal"], asPP: ["since"], asVerb: [] },
@@ -87,8 +87,8 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.Throughout]: { domains: ["temporal"], asPP: ["throughout"], asVerb: [] },
     [RelationKey.ForDuration]: { domains: ["temporal"], asPP: ["for the duration of"], asVerb: [] },
 
-    [RelationKey.DownstreamOf]: { opposite: RelationKey.UpstreamOf, domains: ["temporal", "spatial"], asPP: ["downstream of"], asVerb: [] },
-    [RelationKey.UpstreamOf]: { opposite: RelationKey.DownstreamOf, domains: ["temporal", "spatial"], asPP: ["upstream of"], asVerb: [] },
+    [RelationKey.DownstreamOf]: { opposite: RelationKey.UpstreamOf, domains: ["temporal", "spatial"], asPP: ["downstream of", "after", "later than", "subsequent to", "following", "dependent on", "reliant on", "sourced from"], asVerb: ["follows", "depends on", "relies on", "derives from", "is sourced from", "succeeds", "is a function of", "is contingent on"] },
+    [RelationKey.UpstreamOf]: { opposite: RelationKey.DownstreamOf, domains: ["temporal", "spatial"], asPP: ["upstream of", "before", "prior to", "in advance of", "ahead of", "leading to"], asVerb: ["precedes", "leads to", "is necessary for", "is prerequisite for", "causes", "enables", "gives rise to"] },
 
     [RelationKey.Above]: { opposite: RelationKey.Below, domains: ["spatial"], asPP: ["above"], asVerb: ["overlies"] },
     [RelationKey.Below]: { opposite: RelationKey.Above, domains: ["spatial"], asPP: ["below"], asVerb: ["underlies"] },
@@ -120,8 +120,8 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.On]: { domains: ["spatial"], asPP: ["on"], asVerb: ["rests on", "sits on"] },
     [RelationKey.Under]: { domains: ["spatial"], asPP: ["under", "beneath"], asVerb: ["supports", "is under"] },
 
-    [RelationKey.ConnectedTo]: { opposite: RelationKey.DisconnectedFrom, domains: ["graph"], asPP: ["connected to", "linked to"], asVerb: ["connects to", "links to", "joins"] },
-    [RelationKey.DisconnectedFrom]: { opposite: RelationKey.ConnectedTo, domains: ["graph"], asPP: ["disconnected from", "separate from"], asVerb: ["disconnects from", "separates from"] },
+    [RelationKey.ConnectedTo]: { opposite: RelationKey.DisconnectedFrom, domains: ["graph"], asPP: ["connected to", "linked to", "joined to", "bridged to", "tied to", "wired to", "adjacent to", "neighbors with", "sharing an edge with"], asVerb: ["connects to", "links to", "joins", "bridges to", "ties to", "wires to", "neighbors"] },
+    [RelationKey.DisconnectedFrom]: { opposite: RelationKey.ConnectedTo, domains: ["graph"], asPP: ["disconnected from", "separate from", "not connected to", "unlinked from", "unjoined to", "isolated from", "cut off from", "decoupled from", "disjoint from"], asVerb: ["disconnects from", "separates from", "isolates from", "decouples from", "unlinks from"] },
 
     [RelationKey.Confirms]: { opposite: RelationKey.Refutes, domains: ["generic"], asPP: ["confirmed by"], asVerb: ["confirms", "corroborates", "supports"] },
     [RelationKey.Refutes]: { opposite: RelationKey.Confirms, domains: ["generic"], asPP: ["refuted by"], asVerb: ["refutes", "contradicts", "disproves"] },

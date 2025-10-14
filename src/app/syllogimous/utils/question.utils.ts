@@ -680,7 +680,8 @@ export function createMetaRelationships(settings: Settings, question: Question, 
 
         let subjects: { value: number, subject: string }[] = [];
         if (question.type === EnumQuestionType.Distinction) {
-            subjects = question.buckets.reduce((a, c, i) => [...a, ...c.map(b => ({ value: i, subject: b[0] }))], [] as typeof subjects);
+            // Each bucket contains subject strings; do not index into string (b[0]) or it yields first char
+            subjects = question.buckets.reduce((a, c, i) => [...a, ...c.map(b => ({ value: i, subject: b }))], [] as typeof subjects);
         } else {
             subjects = question.bucket.map((c, i, a) => ({ value: (a.length - i), subject: c }), []);
         }
@@ -1484,29 +1485,30 @@ export function buildWhichClauseVariant(left: string, relationHtml: string, righ
         return m ? m[1] : null;
     };
 
-    // Handle "… to"
+    // Handle "… to" (avoid "to which" → end the preposition)
     const rootTo = endsWith('to');
     if (rootTo) {
-        return `${subj(right)} is the one to which ${subj(left)} is${negWord} ${rootTo}`;
+        return `${subj(right)} is the one ${subj(left)} is${negWord} ${rootTo} to`;
     }
 
-    // Handle "… from"
+    // Handle "… from" (avoid "from which")
     const rootFrom = endsWith('from');
     if (rootFrom) {
-        return `${subj(right)} is the one from which ${subj(left)} is${negWord} ${rootFrom}`;
+        return `${subj(right)} is the one ${subj(left)} is${negWord} ${rootFrom} from`;
     }
 
-    // Handle "… with"
+    // Handle "… with" (avoid "with which")
     const rootWith = endsWith('with');
     if (rootWith) {
-        return `${subj(right)} is the one with which ${subj(left)} is${negWord} ${rootWith}`;
+        return `${subj(right)} is the one ${subj(left)} is${negWord} ${rootWith} with`;
     }
 
     // Handle logical/mereological/of-phrases (subset/part/kind/etc.)
     const ofLogicalMatch = lc.match(/\b(subset of|proper subset of|part of|member of|element of|subclass of|subtype of|special case of|instance of)\b$/);
     if (ofLogicalMatch) {
         const phrase = ofLogicalMatch[1];
-        return `${subj(right)} is the one of which ${subj(left)} is${negWord} ${phrase}`;
+        // Avoid "of which"; simpler relative clause
+        return `${subj(right)} is the one that ${subj(left)} is${negWord} ${phrase}`;
     }
 
     // Directional/flow "… of"
@@ -1516,45 +1518,46 @@ export function buildWhichClauseVariant(left: string, relationHtml: string, righ
     ];
     if (ofDirectional.some(p => lc.includes(p))) {
         const connector = ofDirectional.find(p => lc.includes(p))!;
-        return `${subj(right)} is the one ${connector} which ${subj(left)} is${negWord} located`;
+        // Avoid "which"; attach directly
+        return `${subj(right)} is the one that ${subj(left)} is${negWord} ${connector}`;
     }
 
     // Spatial prepositions
     const spatialPreps = new Map<string, string>([
-        ['above', 'above which'],
-        ['below', 'below which'],
-        ['inside', 'inside which'],
-        ['outside', 'outside of which'],
-        ['on', 'on which'],
-        ['under', 'under which'],
-        ['near', 'near which'],
-        ['beside', 'beside which'],
+        ['above', 'above'],
+        ['below', 'below'],
+        ['inside', 'inside'],
+        ['outside', 'outside of'],
+        ['on', 'on'],
+        ['under', 'under'],
+        ['near', 'near'],
+        ['beside', 'beside'],
     ]);
     for (const [key, connector] of spatialPreps) {
         if (lc === key || lc.startsWith(`${key} `)) {
-            return `${subj(right)} is the one ${connector} ${subj(left)} is${negWord} located`;
+            return `${subj(right)} is the one that ${subj(left)} is${negWord} ${connector}`;
         }
     }
 
     // Temporal prepositions
     const temporalPreps = new Map<string, string>([
-        ['before', 'before which'],
-        ['after', 'after which'],
-        ['during', 'during which'],
-        ['throughout', 'throughout which']
+        ['before', 'before'],
+        ['after', 'after'],
+        ['during', 'during'],
+        ['throughout', 'throughout']
     ]);
     for (const [key, connector] of temporalPreps) {
         if (lc === key || lc.startsWith(`${key} `)) {
-            return `${subj(right)} is the one ${connector} ${subj(left)}${negWord ? ' does not' : ''} occur${negWord ? '' : 's'}`;
+            return `${subj(right)} is the one that ${subj(left)}${negWord ? ' does not' : ''} occur${negWord ? '' : 's'} ${connector}`;
         }
     }
 
     // Graph relations
     if (lc.includes('connected to') || lc.includes('linked to')) {
-        return `${subj(right)} is the one to which ${subj(left)} is${negWord} connected`;
+        return `${subj(right)} is the one that ${subj(left)} is${negWord} connected to`;
     }
     if (lc.includes('disconnected from') || lc.includes('separate from')) {
-        return `${subj(right)} is the one from which ${subj(left)} is${negWord} disconnected`;
+        return `${subj(right)} is the one that ${subj(left)} is${negWord} disconnected from`;
     }
 
     // Numerical comparisons not natural as relative clauses

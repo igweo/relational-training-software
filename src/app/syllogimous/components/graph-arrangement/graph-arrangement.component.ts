@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, AfterViewInit, Output, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { Question } from '../../models/question.models';
 import { EnumQuestionType } from '../../constants/question.constants';
-import { expressionVariants } from '../../utils/question.utils';
+import { expressionVariants, areGraphsIsomorphic } from '../../utils/question.utils';
+import { LS_IMAGE_MODE, LS_VISUAL_MODE } from '../../constants/local-storage.constants';
+import { GlyphGeneratorService } from '../../services/glyph-generator.service';
 
 export interface GraphNode {
   id: string;
@@ -65,7 +67,10 @@ export class GraphArrangementComponent implements AfterViewInit {
   private boundPointerUp!: (e: PointerEvent) => void;
   private boundPointerCancel!: (e: PointerEvent) => void;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  // Cache for node images/glyphs
+  private nodeImageCache = new Map<string, HTMLImageElement>();
+
+  constructor(private cdr: ChangeDetectorRef, private glyphGenerator: GlyphGeneratorService) {}
 
   ngAfterViewInit() {
     // Use multiple attempts to get proper dimensions from dynamically created element
@@ -499,7 +504,7 @@ export class GraphArrangementComponent implements AfterViewInit {
       
       if (objects.length >= 2) {
         // Check if the premise indicates similarity/sameness
-        const isSimilarityPremise = this.getRelationalConnectorPositive(premise, expressionVariants.Direction.positive)
+        const isSimilarityPremise = this.getRelationalConnectorPositive(premise, expressionVariants.Distinction.positive)
         if (isSimilarityPremise) {
           // Group these objects together
           const groupKey = objects.sort().join(',');
@@ -676,11 +681,12 @@ export class GraphArrangementComponent implements AfterViewInit {
 
   private createConnection(fromNode: GraphNode, toNode: GraphNode) {
     // Check if edge already exists (for distinction questions, check both directions since they're symmetric)
-    const existingEdge = this.edges.find(edge => 
-      (edge.from === fromNode.id && edge.to === toNode.id) ||
-      (this.question.type === EnumQuestionType.Distinction && 
-       edge.from === toNode.id || edge.to === fromNode.id)
-    );
+    const existingEdge = this.edges.find(edge => {
+      const sameDir = edge.from === fromNode.id && edge.to === toNode.id;
+      const isDist = this.question.type === EnumQuestionType.Distinction;
+      const oppDir = isDist && edge.from === toNode.id && edge.to === fromNode.id;
+      return sameDir || oppDir;
+    });
     
     if (!existingEdge) {
       // For distinction questions, edges should be non-directional since relationships are symmetric
@@ -980,58 +986,28 @@ export class GraphArrangementComponent implements AfterViewInit {
   }
 
   private drawNode(node: GraphNode) {
-    console.log(`Drawing node: ${node.label} at (${node.x}, ${node.y})`);
-    
     // Ensure we have a valid context
     if (!this.ctx) {
       console.error('No canvas context available for drawing');
       return;
     }
-    
-    // Save context state
-    this.ctx.save();
-    
-    try {
-      const isSelected = this.selectedNodeForConnection === node;
-      
-      // Draw node circle with better visibility
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, this.nodeRadius, 0, 2 * Math.PI);
-      this.ctx.fillStyle = isSelected ? '#ffeb3b' : '#e3f2fd'; // Yellow for selected, blue for normal
-      this.ctx.fill();
-      
-      // Draw border with selection highlighting
-      this.ctx.beginPath();
-      this.ctx.arc(node.x, node.y, this.nodeRadius, 0, 2 * Math.PI);
-      this.ctx.strokeStyle = isSelected ? '#ff9800' : '#1976d2'; // Orange for selected, blue for normal
-      this.ctx.lineWidth = isSelected ? 4 : 2; // Thicker border for selected
-      this.ctx.stroke();
-      
-      // Add pulsing effect for selected node
-      if (isSelected) {
-        this.ctx.beginPath();
-        this.ctx.arc(node.x, node.y, this.nodeRadius + 8, 0, 2 * Math.PI);
-        this.ctx.strokeStyle = 'rgba(255, 152, 0, 0.5)';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-      }
-      
-      // Draw node label with better contrast
+
+    const imageMode = localStorage.getItem(LS_IMAGE_MODE) === 'true';
+    const visualMode = localStorage.getItem(LS_VISUAL_MODE) === 'true';
+
+    const drawLabel = () => {
+      this.ctx.save();
       this.ctx.fillStyle = '#000000';
       this.ctx.font = 'bold 12px Arial';
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
-      
-      // Wrap text if too long
       const maxWidth = this.nodeRadius * 1.8;
       const text = node.label;
-      
       if (this.ctx.measureText(text).width > maxWidth) {
         const words = text.split(' ');
         const lines: string[] = [];
         let currentLine = '';
-        
-        words.forEach(word => {
+        for (const word of words) {
           const testLine = currentLine + (currentLine ? ' ' : '') + word;
           if (this.ctx.measureText(testLine).width > maxWidth && currentLine) {
             lines.push(currentLine);
@@ -1039,26 +1015,53 @@ export class GraphArrangementComponent implements AfterViewInit {
           } else {
             currentLine = testLine;
           }
-        });
+        }
         lines.push(currentLine);
-        
-        // Draw multiple lines
-        lines.forEach((line, index) => {
-          const lineHeight = 14;
-          const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
-          this.ctx.fillText(line, node.x, startY + index * lineHeight);
-        });
+        const lineHeight = 14;
+        const startY = node.y - ((lines.length - 1) * lineHeight) / 2;
+        lines.forEach((line, index) => this.ctx.fillText(line, node.x, startY + index * lineHeight));
       } else {
         this.ctx.fillText(text, node.x, node.y);
       }
-      
-      console.log(`Successfully drew node: ${node.label}`);
-    } catch (error) {
-      console.error(`Error drawing node ${node.label}:`, error);
-    } finally {
-      // Restore context state
       this.ctx.restore();
+    };
+
+    const drawImage = (img: HTMLImageElement, size: number) => {
+      const half = size / 2;
+      this.ctx.drawImage(img, node.x - half, node.y - half, size, size);
+    };
+
+    const cached = this.nodeImageCache.get(node.label);
+    if ((imageMode || visualMode) && cached) {
+      drawImage(cached, imageMode ? 56 : 40);
+      return;
     }
+
+    if (imageMode || visualMode) {
+      // Lazy-load asset then render
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        this.nodeImageCache.set(node.label, img);
+        this.render();
+      };
+      img.onerror = () => {
+        // Fallback to text if image fails
+        drawLabel();
+      };
+      if (imageMode) {
+        img.src = `https://picsum.photos/seed/${encodeURIComponent(node.label)}/56/56`;
+      } else {
+        const dataURL = this.glyphGenerator.generateGlyphDataURL(node.label, { size: 56, strokeWidth: 1.5, symmetry: 'radial', fg: '#222' });
+        img.src = dataURL;
+      }
+      // Draw label as interim placeholder
+      drawLabel();
+      return;
+    }
+
+    // Default: label only (no blue bubble)
+    drawLabel();
   }
 
   private drawEdge(edge: GraphEdge) {
@@ -1148,29 +1151,26 @@ export class GraphArrangementComponent implements AfterViewInit {
   }
 
   private validateGraphStructure(): boolean {
-    // For now, implement a basic validation
-    // This could be enhanced to check for graph isomorphism
-    
+    // Use isomorphism check for Graph Matching (structure matters)
+    if (this.question.type === EnumQuestionType.GraphMatching && this.expectedEdges.length > 0) {
+      const toEdgeList = (edges: GraphEdge[]) =>
+        edges.map(e => [e.from, e.directed ? "→" : "↔", e.to] as [string, "↔" | "→" | "←", string]);
+      const expected = toEdgeList(this.expectedEdges);
+      const actual = toEdgeList(this.edges);
+      return areGraphsIsomorphic(expected, actual);
+    }
+
     if (this.expectedEdges.length === 0) {
-      // If no expected edges, any arrangement is valid
       return true;
     }
-    
-    // Check if the number of edges is reasonable
+
+    // Fallback: edge count proximity
     const expectedEdgeCount = this.expectedEdges.length;
     const actualEdgeCount = this.edges.length;
-    
-    // Allow some flexibility in edge count
     if (Math.abs(expectedEdgeCount - actualEdgeCount) > 2) {
       return false;
     }
-    
-    // For more sophisticated validation, we could:
-    // 1. Check if the graphs are isomorphic
-    // 2. Validate specific relationship patterns
-    // 3. Check transitivity and other logical properties
-    
-    return true; // Basic validation for now
+    return true;
   }
 
   resetGraph() {

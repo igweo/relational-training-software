@@ -11,6 +11,7 @@ import { canGenerateQuestion, QuestionSettings, Settings } from "../models/setti
 import { ProgressAndPerformanceService } from "./progress-and-performance.service";
 import { guid } from "src/app/utils/uuid";
 import { EnumArrangements, EnumQuestionType } from "../constants/question.constants";
+import { renderRelation, RelationKey } from "../constants/relations.constants";
 import { EnumQuestionGroup, QUESTION_TYPE_SETTING_PARAMS } from "../constants/settings.constants";
 import { Logger } from "../utils/logger";
 import { GameTimerService } from "./game-timer.service";
@@ -375,6 +376,11 @@ export class SyllogimousService {
                 if (qs.enabled && shouldIncludeQuestion) {
                     const createFn = this.getCreateFn(qt, qs.clampNumOfPremises(numOfPremises || qs.getNumOfPremises()));
                     groupChoices.push(createFn);
+                    // Slightly increase Graph Matching appearance probability
+                    if (qt === EnumQuestionType.GraphMatching) {
+                        groupChoices.push(createFn);
+                        groupChoices.push(createFn);
+                    }
                     // Slightly increase Inclusion/Exclusion appearance probability
                     if (qt === EnumQuestionType.InclusionExclusion) {
                         groupChoices.push(createFn);
@@ -1366,38 +1372,18 @@ export class SyllogimousService {
         const words = pickUniqueItems(symbols, numOfEls).picked;
         const question = new Question(type);
 
-        let edgeList: [string, "↔" | "→" | "←", string][] = [];
+        // Build a connected base graph with exactly numOfPremises edges (spanning tree)
         const inverseMap = { "→": "←", "←": "→" } as Record<"→" | "←", | "→" | "←">;
-        const _words = [...words];
-        const isWordUsed = (w: string) => edgeList.reduce((a, c) => (a.add(c[0]), a.add(c[2]), a), new Set() as Set<string>).has(w);
-        const notAllUsed = () => _words.some(w => !isWordUsed(w));
-        const edgeAlreadyExists = (a: string, b: string) => edgeList.some(([_a, _, _b]) => (_a === a && _b === b) || (_a === b && _b === a));
-        let safe = 1e3;
-        while (safe-- && notAllUsed()) {
-            const [a, b] = pickUniqueItems(_words, 2).picked;
-            if (edgeAlreadyExists(a, b)) {
-                continue;
-            }
-            const newEdge = (Math.random() < 0.25)
-                ? [a, "↔", b]
-                : coinFlip()
-                    ? [a, "→", b]
-                    : [a, "←", b];
-            edgeList.push(newEdge as [string, "↔" | "→" | "←", string]);
-            if (_words.length > 2 && coinFlip()) {
-                const subject = coinFlip() ? a : b;
-                const foundIdx = _words.indexOf(subject);
-                _words.splice(foundIdx, 1);
-            }
+        let edgeList: [string, "↔" | "→" | "←", string][] = [];
+        const shuffled = shuffle([...words]);
+        for (let i = 1; i < shuffled.length; i++) {
+            const a = shuffled[i];
+            const b = shuffled[Math.floor(Math.random() * i)];
+            const rel = (Math.random() < 0.25) ? "↔" : (coinFlip() ? "→" : "←");
+            edgeList.push([a, rel, b]);
         }
-        if (safe <= 0) {
-            throw new Error("MAXIMUM NUMBER OF ITERATIONS REACHED!");
-        }
-
-        const edgeDiscrepancyCount = edgeList.length !== numOfPremises;
-        const all3ElementsAre2Way = numOfEls === 3 && edgeList.every(([a, rel, b]) => rel === "↔");
-        if (edgeDiscrepancyCount || all3ElementsAre2Way) {
-            return this.createGraphMatching(numOfPremises);
+        if (numOfEls === 3 && edgeList.every(([, r]) => r === "↔")) {
+            edgeList[0][1] = coinFlip() ? "→" : "←";
         }
 
         const newWords = pickUniqueItems(symbols, numOfEls).picked;
@@ -1410,37 +1396,29 @@ export class SyllogimousService {
         question.isValid = coinFlip();
         if (!question.isValid) {
             this.logger.info("Modifying graph in an invalid way");
-
-            while (areGraphsIsomorphic(edgeList, edgeList2)) {
+            let guard = 200;
+            while (guard-- > 0 && areGraphsIsomorphic(edgeList, edgeList2)) {
                 const { picked } = pickUniqueItems(edgeList2, 1);
-                const [a, rel, b] = picked[0];
+                const [pa, prel, pb] = picked[0];
 
-                if (rel === "→" || rel === "←") {
-                    if (Math.random() < 0.15) {
-                        this.logger.info("Swap 1-way for 2-way");
-                        picked[0][1] = "↔";
-                    } else if (coinFlip()) {
-                        this.logger.info("Rotate 1-way direction");
-                        picked[0][1] = inverseMap[picked[0][1] as "→" | "←"] as "→" | "←";
+                const op = Math.random();
+                if ((prel === "→" || prel === "←") && op < 0.33) {
+                    picked[0][1] = inverseMap[prel as "→" | "←"] as "→" | "←";
+                } else if (op < 0.66) {
+                    picked[0][1] = (prel === "↔") ? (coinFlip() ? "→" : "←") : "↔";
+                } else if (numOfEls > 3) {
+                    const replaceHead = coinFlip();
+                    const candidatePool = newWords.filter(w => w !== pa && w !== pb);
+                    const newNode = pickUniqueItems(candidatePool, 1).picked[0];
+                    if (replaceHead) {
+                        picked[0][0] = newNode;
+                    } else {
+                        picked[0][2] = newNode;
                     }
-                } else if (Math.random() < 0.15) {
-                    this.logger.info("Swap 2-way for 1-way");
-                    picked[0][1] = { "true": "→", "false": "←" }[String(coinFlip())] as "→" | "←";
                 }
-
-                if (coinFlip() && numOfEls > 3) {
-                    const rndBool = coinFlip();
-                    const bool2subject: Record<string, number> = { "true": 0, "false": 2 };
-                    const subjectPosIdx = bool2subject[String(rndBool)];
-                    const subjectNegIdx = bool2subject[String(!rndBool)];
-                    const { picked: picked2 } = pickUniqueItems(edgeList2, 1);
-                    let picked;
-                    while (!picked || picked === picked2[0][subjectPosIdx] || picked === picked2[0][subjectNegIdx]) {
-                        picked = pickUniqueItems(newWords, 1).picked[0];
-                    }
-                    this.logger.info("Change an edge by connecting a/b to a different subject", [picked2[0][subjectPosIdx], picked]);
-                    picked2[0][subjectPosIdx] = picked;
-                }
+            }
+            if (areGraphsIsomorphic(edgeList, edgeList2) && edgeList2.length) {
+                edgeList2[0][1] = edgeList2[0][1] === "↔" ? (coinFlip() ? "→" : "←") : "↔";
             }
         }
 
@@ -1468,14 +1446,20 @@ export class SyllogimousService {
         this.logger.info("EdgeList2", edgeList2);
 
         const usedEdges = new Set<string>();
+        const relationMiddle = (rel: "↔" | "→" | "←") => {
+            let key: RelationKey;
+            if (rel === "↔") key = RelationKey.ConnectedTo;
+            else if (rel === "→") key = RelationKey.UpstreamOf; // A → B: A upstream of / leads to B
+            else key = RelationKey.DownstreamOf;                 // A ← B: A downstream of / depends on B
+
+            const preferVerb = Math.random() < 0.7; // bias toward verbs for readability
+            const picked = renderRelation(key, preferVerb);
+            return picked.needsCopula ? `is ${picked.text}` : picked.text;
+        };
+
         const readable = (edges: typeof edgeList, edge: typeof edgeList[0], negated = false, meta = false) => {
             const getSubject = (subject: string) => `<span class="subject">${subject}</span>`;
-            const readMap = {
-                "→": "goes to",
-                "←": "comes from",
-                "↔": "is connected to"
-            };
-            let relationship = readMap[edge[1]];
+            let relationship = relationMiddle(edge[1]);
             let isMetaRelated = false;
             if (meta) {
                 const getEdgeKey = (edge: typeof edgeList[0]) => [...edge].join(";");
@@ -1489,11 +1473,8 @@ export class SyllogimousService {
                 ) {
                     usedEdges.add(edgeKey);
                     usedEdges.add(pickedEdgeKey);
-                    if (coinFlip() && edge[1] !== "↔") {
-                        relationship = `the inverse of ${getSubject(pickedEdge[2])} to ${getSubject(pickedEdge[0])}`;
-                    } else {
-                        relationship = `${getSubject(pickedEdge[0])} is to ${getSubject(pickedEdge[2])}`;
-                    }
+                    // Build an analogy-like phrase while staying consistent
+                    relationship = `${getSubject(pickedEdge[0])} ${relationMiddle(pickedEdge[1])} ${getSubject(pickedEdge[2])}`;
                     isMetaRelated = true;
                     this.logger.info("Metarelated");
                     question.metaRelations++;
@@ -1501,7 +1482,8 @@ export class SyllogimousService {
             } else if (negated && (edge[1] === "→" || edge[1] === "←")) {
                 this.logger.info("Negated");
                 question.negations++;
-                relationship = `<span class="is-negated">${readMap[inverseMap[edge[1]]]}</span>`;
+                const inverseRel = edge[1] === "→" ? "←" : "→";
+                relationship = `<span class=\"is-negated\">${relationMiddle(inverseRel)}</span>`;
             }
             return isMetaRelated
                 ? `${getSubject(edge[0])} is to ${getSubject(edge[2])} as ${relationship}`

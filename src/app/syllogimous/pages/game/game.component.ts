@@ -440,10 +440,10 @@ export class GameComponent {
 
     shouldShowGraphArrangement(): boolean {
         // Check if graph arrangement mode is enabled
-        const graphArrangementEnabled = localStorage.getItem(LS_GRAPH_ARRANGEMENT_MODE);
+        const graphArrangementEnabled = localStorage.getItem(LS_GRAPH_ARRANGEMENT_MODE) === "true";
         
-        // If explicitly disabled, don't show graph arrangement
-        if (graphArrangementEnabled === "false") {
+        // Opt-in only: if not true, do not show
+        if (!graphArrangementEnabled) {
             return false;
         }
         

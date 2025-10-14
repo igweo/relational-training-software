@@ -119,7 +119,7 @@ export const DEFAULT_ENABLED_FLAGS = {
     spatioTemporalMode: false,
     connectedNarrativeMode: false,
     inclusionExclusionOnlyMode: false,
-    graphArrangementMode: true,
+    graphArrangementMode: false,
     binary: {
         and: true,
         nand: true,

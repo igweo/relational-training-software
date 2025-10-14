@@ -91,6 +91,7 @@ export const TIER_SCORE_ADJUSTMENTS: Record<EnumTiers, { increment: number, decr
 export const ORDERED_TIERS = Object.keys(TIER_SCORE_RANGES) as EnumTiers[];
 
 export const ORDERED_QUESTION_TYPES = [ 
+    EnumQuestionType.GraphMatching,
     EnumQuestionType.Distinction,
     EnumQuestionType.ComparisonNumerical,
     EnumQuestionType.ComparisonChronological,
@@ -100,7 +101,6 @@ export const ORDERED_QUESTION_TYPES = [
     EnumQuestionType.Direction,
     EnumQuestionType.Direction3DSpatial,
     EnumQuestionType.Direction3DTemporal,
-    EnumQuestionType.GraphMatching,
     EnumQuestionType.Analogy,
     EnumQuestionType.Binary,
     EnumQuestionType.InclusionExclusion,

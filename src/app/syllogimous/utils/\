@@ -236,7 +236,7 @@ export function createMetaRelationships(settings: Settings, question: Question, 
 
         let subjects: { value: number, subject: string }[] = [];
         if (question.type === EnumQuestionType.Distinction) {
-            subjects = question.buckets.reduce((a, c, i) => [...a, ...c.map(b => ({ value: i, subject: b[0] }))], [] as typeof subjects);
+            subjects = question.buckets.reduce((a, c, i) => [...a, ...c.map(b => ({ value: i, subject: b }))], [] as typeof subjects);
         } else {
             subjects = question.bucket.map((c, i, a) => ({ value: (a.length - i), subject: c }), []);
         }
