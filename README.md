@@ -26,7 +26,7 @@ The application implements findings from cognitive training research showing tha
 
 ### 1. **Distinction** 
 *Identity and Equivalence Relations*
-- **Function**: Trains same/different discrimination and categorization
+- **Function**: Trains same/different discriminatio and categorization
 - **RFT Frame**: Coordination and distinction frames
 - **Example**: "A is the same as B, B is different from C" → "A is ? C"
 

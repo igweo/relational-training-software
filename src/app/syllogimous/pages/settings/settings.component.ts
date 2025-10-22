@@ -95,7 +95,7 @@ export class SettingsComponent {
 
         // Graph arrangement mode
         const graphArrangementModeStored = localStorage.getItem(LS_GRAPH_ARRANGEMENT_MODE);
-        this.graphArrangementMode.setValue(graphArrangementModeStored === null ? false : graphArrangementModeStored === "true");
+        this.graphArrangementMode.setValue(graphArrangementModeStored === null ? true : graphArrangementModeStored === "true");
         this.graphArrangementMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_GRAPH_ARRANGEMENT_MODE, String(v)));
 

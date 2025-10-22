@@ -1494,6 +1494,10 @@ export function buildWhichClauseVariant(left: string, relationHtml: string, righ
     // Handle "… from" (avoid "from which")
     const rootFrom = endsWith('from');
     if (rootFrom) {
+        // Avoid awkward phrasing for qualitative difference like "distinct from"/"different from"
+        if (/^(distinct|different|dissimilar|separate|independent|divergent)$/i.test(rootFrom)) {
+            return null; // Let caller keep the original A is distinct from B order
+        }
         return `${subj(right)} is the one ${subj(left)} is${negWord} ${rootFrom} from`;
     }
 

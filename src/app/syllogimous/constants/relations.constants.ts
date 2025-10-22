@@ -69,8 +69,45 @@ type Entry = {
 const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
 export const RELATIONS: Record<RelationKey, Entry> = {
-    [RelationKey.SameAs]: { opposite: RelationKey.DifferentFrom, domains: ["generic"], asPP: ["equivalent to", "identical to", "the same as"], asVerb: ["matches", "coincides with", "is identical to"] },
-    [RelationKey.DifferentFrom]: { opposite: RelationKey.SameAs, domains: ["generic"], asPP: ["different from", "distinct from"], asVerb: ["differs from", "diverges from", "contrasts with"] },
+    [RelationKey.SameAs]: { 
+        opposite: RelationKey.DifferentFrom, 
+        domains: ["generic"], 
+        asPP: [
+            "equivalent to", "identical to", "the same as", "congruent to", "tantamount to", 
+            "analogous to", "correspondent to", "commensurate with", "coincident with", 
+            "coextensive with", "synonymous with", "interchangeable with", "indistinguishable from", 
+            "on par with", "aligned with", "consistent with", "homologous to", "isomorphic to", 
+            "parallel to", "correlative to", "proportional to", "reciprocal to", "complementary to", 
+            "concomitant with", "the very same as", "equal in value to", "equal in meaning to", 
+            "functionally equivalent to", "logically equivalent to", "coincident with respect to", 
+            "coterminous with", "coequal to", "coincident in identity with", "coincides with", 
+            "corresponds exactly to", "amounts to"
+        ], 
+        asVerb: [
+            "matches", "coincides with", "is identical to", "equals", "corresponds to", 
+            "aligns with", "parallels", "mirrors", "reflects", "echoes", "resembles", 
+            "approximates", "approaches", "converges with", "unifies with", "merges with"
+        ] 
+    },
+    [RelationKey.DifferentFrom]: { 
+        opposite: RelationKey.SameAs, 
+        domains: ["generic"], 
+        asPP: [
+            "different from", "distinct from", "dissimilar to", "contrary to", "opposite to", 
+            "divergent from", "disparate from", "incompatible with", "incongruent with", 
+            "antithetical to", "contradictory to", "inverse to", "discordant with", 
+            "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to", 
+            "orthogonal to", "mutually exclusive with", "at variance with", "at odds with", 
+            "not equivalent to", "not identical to", "not analogous to", "not correspondent to", 
+            "not the same as", "unequal to", "nonidentical to", "non-equivalent to", 
+            "inconsistent with", "incompatible with", "irreconcilable with", "diametrically opposed to"
+        ], 
+        asVerb: [
+            "differs from", "diverges from", "contrasts with", "opposes", "contradicts", 
+            "conflicts with", "clashes with", "disagrees with", "varies from", "deviates from", 
+            "departs from", "separates from", "distinguishes from", "differentiates from"
+        ] 
+    },
 
     [RelationKey.GreaterThan]: { opposite: RelationKey.LessThan, domains: ["numerical"], asPP: ["greater than", "higher than", "more than"], asVerb: ["exceeds", "outweighs", "surpasses"] },
     [RelationKey.LessThan]: { opposite: RelationKey.GreaterThan, domains: ["numerical"], asPP: ["less than", "lower than", "fewer than"], asVerb: ["falls short of", "is outweighed by", "is surpassed by"] },

@@ -1447,11 +1447,16 @@ export class SyllogimousService {
 
         const usedEdges = new Set<string>();
         const relationMiddle = (rel: "↔" | "→" | "←") => {
-            let key: RelationKey;
-            if (rel === "↔") key = RelationKey.ConnectedTo;
-            else if (rel === "→") key = RelationKey.UpstreamOf; // A → B: A upstream of / leads to B
-            else key = RelationKey.DownstreamOf;                 // A ← B: A downstream of / depends on B
+            let pool: RelationKey[];
+            if (rel === "↔") {
+                pool = [RelationKey.ConnectedTo];
+            } else if (rel === "→") {
+                pool = [RelationKey.Causes, RelationKey.Enables, RelationKey.UpstreamOf];
+            } else { // "←"
+                pool = [RelationKey.CausedBy, RelationKey.Inhibits, RelationKey.DownstreamOf];
+            }
 
+            const key = pool[Math.floor(Math.random() * pool.length)];
             const preferVerb = Math.random() < 0.7; // bias toward verbs for readability
             const picked = renderRelation(key, preferVerb);
             return picked.needsCopula ? `is ${picked.text}` : picked.text;
