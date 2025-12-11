@@ -160,17 +160,6 @@
                         Auto-advance slides in carousel mode
                     </label>
                 </div>
-                <hr class="my-2">
-                <app-input
-                    type="range"
-                    min="0.7"
-                    max="1.6"
-                    step="0.05"
-                    name="speechRate"
-                    [label]="'Speech rate: ' + (Math.round((speechRate.value || 1)*100)/100) + 'x'"
-                    [ngControl]="speechRate"
-                    [noParenthesisValue]="true"
-                ></app-input>
             </div>
         </div>
 
@@ -189,7 +178,7 @@
                     </label>
                 </div>
                 <div class="small text-muted mt-1">
-                    Transforms text into visuospatial symbols
+                    Transforms text into visuospatial symbols: 🔴🟠🟡🟢🔵 ⬛⬜🟥🟦 🔺🔻🔶🔷
                 </div>
                 <hr class="my-2">
                 <div class="form-check">

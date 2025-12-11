@@ -416,7 +416,6 @@ html[darkmode] svg {
     filter: invert(1) hue-rotate(180deg);
 }
 
-
 /* Opacity utilities */
 .opacity-10 { opacity: 0.1; }
 .opacity-20 { opacity: 0.2; }

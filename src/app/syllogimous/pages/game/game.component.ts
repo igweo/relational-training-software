@@ -8,7 +8,7 @@ import { EnumScreens } from '../../constants/syllogimous.constants';
 import { GameTimerService } from '../../services/game-timer.service';
 import { SpeechService } from '../../services/speech.service';
 import { VisualService } from '../../services/visual.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_IMAGE_MODE, LS_AUTO_CAROUSEL, LS_SPEECH_RATE } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_IMAGE_MODE, LS_AUTO_CAROUSEL } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { AnalyticsService } from '../../../shared/services/analytics.service';
 
@@ -96,20 +96,27 @@ export class GameComponent {
         // Check if speech mode is enabled before using text-to-speech
         const speechModeEnabled = localStorage.getItem(LS_SPEECH_MODE) === "true";
         if (speechModeEnabled) {
-            // Enable fully auditory visualization mode (hide premises/conclusion UI)
+            // Enable entity-only audio visualization mode
             this.entityAudioMode = true;
-            // Minimal placeholder (optional)
             if (!this.hideInstructionsEnabled) {
+                const { html } = this.visualService.buildEntitiesList(this.sylSrv.question, this.isVisualModeEnabled);
                 this.sylSrv.question.instructions = [
-                    `<div class="small text-muted">Audio mode</div><div>Fully auditory. Adjust speech rate in Settings.</div>`
+                    `<div class="small text-muted">Entities</div>${html}`
                 ];
             } else {
                 this.sylSrv.question.instructions = [];
             }
-            const speechRateStr = localStorage.getItem(LS_SPEECH_RATE);
-            const speechRate = speechRateStr ? Number(speechRateStr) : 1.0;
-            // Speak premises and conclusion using subject names at configured rate
-            this.speechService.speakQuestionFully(this.sylSrv.question, 'en-US', speechRate);
+            // Speak premises and conclusion using entity indices (skip preface)
+            this.speechService.speakQuestionAsEntities(this.sylSrv.question, 'en-US', false).then(() => {
+                if (!this.hideInstructionsEnabled) {
+                    const conclusionHtml = Array.isArray(this.sylSrv.question.conclusion)
+                        ? `<div class="small text-muted">Conclusion</div><div>${this.sylSrv.question.conclusion.map(c => `<div>${c}</div>`).join('')}</div>`
+                        : `<div class="small text-muted">Conclusion</div><div>${this.sylSrv.question.conclusion}</div>`;
+                    this.sylSrv.question.instructions = [conclusionHtml];
+                } else {
+                    this.sylSrv.question.instructions = [];
+                }
+            });
         }
         switch (this.timerType) {
             case '1': {
@@ -173,7 +180,6 @@ export class GameComponent {
 
     ngOnDestroy() {
         this.gameTimerService.stop();
-        this.speechService.stop();
     }
 
     selectOption(option: string) {
