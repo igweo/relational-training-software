@@ -91,13 +91,6 @@
                 <div class="d-grid" style="gap: 1rem;">
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold">Question Type Selection</span>
-                        <button 
-                            class="btn btn-sm btn-outline-primary"
-                            (click)="setMatrixReasoningOnly()"
-                            title="Enable only Matrix Reasoning questions"
-                        >
-                            Matrix Reasoning Only
-                        </button>
                     </div>
                     
                     <div class="row g-2">
@@ -178,7 +171,7 @@
                     </label>
                 </div>
                 <div class="small text-muted mt-1">
-                    Transforms text into visuospatial symbols: 🔴🟠🟡🟢🔵 ⬛⬜🟥🟦 🔺🔻🔶🔷
+                    Transforms text into pseudo-randomly generated glyphs.
                 </div>
                 <hr class="my-2">
                 <div class="form-check">
@@ -253,25 +246,6 @@
             </div>
         </div>
 
-        <div class="card shadow-sm">
-            <div class="card-header py-2 small">Connected narrative</div>
-            <div class="card-body">
-                <div class="form-check">
-                    <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        id="connectedNarrativeMode"
-                        [formControl]="connectedNarrativeMode"
-                    >
-                    <label class="form-check-label" for="connectedNarrativeMode">
-                        Build a connected narrative paragraph from premises
-                    </label>
-                </div>
-                <div class="small text-muted mt-1">
-                    Produces a single paragraph that chains premises using relative clauses and domain-aware connectors
-                </div>
-            </div>
-        </div>
     </div>
 
     <div footer class="playcard-toolbar">

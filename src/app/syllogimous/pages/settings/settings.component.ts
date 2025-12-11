@@ -5,7 +5,7 @@ import { FormControl } from '@angular/forms';
 import { DEFAULT_DAILY_GOAL, DEFAULT_PREMISES_DOWN_THRESHOLD, DEFAULT_PREMISES_UP_THRESHOLD, DEFAULT_TRAINING_UNIT_LENGTH, DEFAULT_WEEKLY_GOAL, ProgressAndPerformanceService } from '../../services/progress-and-performance.service';
 import { LS_DAILY_GOAL, LS_PREMISES_DOWN_THRESHOLD, LS_PREMISES_UP_THRESHOLD, LS_TRAINING_UNIT_LENGTH, LS_WEEKLY_GOAL } from '../../constants/local-storage.constants';
 import { SyllogimousService } from '../../services/syllogimous.service';
-import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_IMAGE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_AUTO_CAROUSEL } from '../../constants/local-storage.constants';
+import { LS_SPEECH_MODE, LS_VISUAL_MODE, LS_GRAPH_ARRANGEMENT_MODE, LS_SPATIO_TEMPORAL_MODE, LS_IMAGE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_AUTO_CAROUSEL } from '../../constants/local-storage.constants';
 import { LS_HIDE_INSTRUCTIONS } from '../../constants/local-storage.constants';
 import { EnumQuestionType } from '../../constants/question.constants';
 import { areSettingsInvalid, Settings } from '../../models/settings.models';
@@ -31,7 +31,6 @@ export class SettingsComponent {
     imageMode = new FormControl(false);
     graphArrangementMode = new FormControl(true);
     spatioTemporalMode = new FormControl(false);
-    connectedNarrativeMode = new FormControl(false);
     inclusionExclusionOnlyMode = new FormControl(false);
     hideInstructions = new FormControl(false);
     autoCarousel = new FormControl(false);
@@ -97,12 +96,6 @@ export class SettingsComponent {
         this.spatioTemporalMode.valueChanges
             .subscribe(v => localStorage.setItem(LS_SPATIO_TEMPORAL_MODE, String(v)));
 
-        // Connected narrative mode
-        const connectedNarrativeStored = localStorage.getItem(LS_CONNECTED_NARRATIVE_MODE);
-        this.connectedNarrativeMode.setValue(connectedNarrativeStored === null ? false : connectedNarrativeStored === "true");
-        this.connectedNarrativeMode.valueChanges
-            .subscribe(v => localStorage.setItem(LS_CONNECTED_NARRATIVE_MODE, String(v)));
-
         // Inclusion/Exclusion only mode
         const ieOnlyStored = localStorage.getItem(LS_INCLUSION_EXCLUSION_ONLY_MODE);
         this.inclusionExclusionOnlyMode.setValue(ieOnlyStored === null ? false : ieOnlyStored === "true");
@@ -126,20 +119,6 @@ export class SettingsComponent {
         return Object.values(EnumQuestionType);
     }
 
-    setMatrixReasoningOnly(): void {
-        // Create or update playground settings
-        if (!this.sylSrv.playgroundSettings) {
-            this.sylSrv.playgroundSettings = new Settings(this.sylSrv.settings);
-        }
-        
-        // Disable all question types first
-        Object.values(EnumQuestionType).forEach(questionType => {
-            this.sylSrv.playgroundSettings!.question[questionType].enabled = false;
-        });
-        
-        // Enable only Matrix Reasoning
-        this.sylSrv.playgroundSettings.question[EnumQuestionType.MatrixReasoning].enabled = true;
-    }
 
     toggleQuestionType(questionType: EnumQuestionType, event: Event): void {
         const target = event.target as HTMLInputElement;

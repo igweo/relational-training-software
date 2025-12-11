@@ -18,7 +18,7 @@ export class StartComponent {
 
     TIER_SCORE_RANGES = TIER_SCORE_RANGES;
     tiers = Object.values(EnumTiers);
-    nextTier: EnumTiers | string = EnumTiers.Savant;
+    nextTier: EnumTiers | string = EnumTiers.Apprentice;
     pointsRemaining = 0;
 
     questions: Question[] = [];

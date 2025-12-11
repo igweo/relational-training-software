@@ -78,52 +78,7 @@
                 <ng-container *ngTemplateOutlet="questionInstructionsAndNotes"></ng-container>
             </ng-container>
 
-            <!-- Matrix Reasoning Question Display -->
-            <div *ngIf="sylSrv.question.type === 'Matrix Reasoning'; else regularQuestionTemplate">
-                <div class="text-center">
-                    <div class="small text-muted mb-3">Find the missing pattern</div>
-
-                    <ng-container *ngIf="(sylSrv.question.matrixCells?.length || 0) > 0 && (sylSrv.question.optionCells?.length || 0) > 0; else legacyMatrixFallback">
-                        <app-matrix-canvas
-                            [cells]="sylSrv.question.matrixCells || []"
-                            [missing]="sylSrv.question.missingPosition"
-                            [options]="sylSrv.question.optionCells || []"
-                            [selectedIndex]="selectedOptionIndex"
-                            (select)="selectMatrixOption($event)"
-                        ></app-matrix-canvas>
-                    </ng-container>
-
-                    <ng-template #legacyMatrixFallback>
-                        <div class="matrix-container" style="display: inline-block; font-size: 2em; line-height: 1.2;">
-                            <div *ngFor="let row of sylSrv.question.matrix; let i = index" style="margin: 5px 0;">
-                                <span *ngFor="let cell of row; let j = index" 
-                                      style="margin: 0 10px; display: inline-block; width: 40px; text-align: center;"
-                                      [style.background-color]="cell === '?' ? '#f0f0f0' : 'transparent'"
-                                      [style.border]="cell === '?' ? '2px dashed #ccc' : 'none'"
-                                      [style.border-radius]="cell === '?' ? '5px' : '0'">
-                                    {{ cell }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <div class="small text-muted mb-2">Choose the correct answer:</div>
-                            <div class="d-flex flex-wrap justify-content-center gap-3">
-                                <button *ngFor="let option of sylSrv.question.options; let i = index"
-                                        class="btn btn-outline-primary"
-                                        [class.btn-primary]="selectedOption === option"
-                                        (click)="selectOption(option)"
-                                        style="font-size: 1.5em; min-width: 60px; min-height: 60px;">
-                                    {{ option }}
-                                </button>
-                            </div>
-                        </div>
-                    </ng-template>
-                </div>
-            </div>
-
-            <!-- Regular Question Template -->
-            <ng-template #regularQuestionTemplate>
+            <!-- Question Template -->
                 <!-- Always show question content first -->
                 <div *ngIf="!entityAudioMode; else entityOnlyPremisesBlock">
                     <div class="small text-muted">Premises</div>
@@ -147,20 +102,12 @@
                         <div [innerHTML]="sylSrv.question.conclusion | visualTransform:isVisualModeEnabled"></div>
                     </div>
                 </ng-template>
-            </ng-template>
         </div>
     </div>
 
     <div footer class="d-flex gap-3 justify-content-center">
-        <!-- Matrix Reasoning: Show submit button if option selected -->
-        <button *ngIf="sylSrv.question.type === 'Matrix Reasoning' && (selectedOption || selectedOptionIndex !== undefined)"
-                class="btn btn-lg btn-primary col-md-4 col-6" 
-                (click)="submitAnswer()">
-            Submit Answer
-        </button>
-        
-        <!-- Regular questions: True/False buttons (always show for non-Matrix questions) -->
-        <ng-container *ngIf="sylSrv.question.type !== 'Matrix Reasoning'">
+        <!-- True/False buttons -->
+        <ng-container>
             <button *ngIf="!trueButtonToTheRight" 
                     class="btn btn-lg btn-success col-md-3 col-4" 
                     (click)="handleAnswer(true)">True</button>

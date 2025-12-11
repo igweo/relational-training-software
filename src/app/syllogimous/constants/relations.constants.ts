@@ -41,8 +41,7 @@ export enum RelationKey {
     On,
     Under,
 
-    ConnectedTo,
-    DisconnectedFrom,
+    IndependentOf,
 
     Confirms,
     Refutes,
@@ -73,39 +72,28 @@ export const RELATIONS: Record<RelationKey, Entry> = {
         opposite: RelationKey.DifferentFrom, 
         domains: ["generic"], 
         asPP: [
-            "equivalent to", "identical to", "the same as", "congruent to", "tantamount to", 
-            "analogous to", "correspondent to", "commensurate with", "coincident with", 
-            "coextensive with", "synonymous with", "interchangeable with", "indistinguishable from", 
-            "on par with", "aligned with", "consistent with", "homologous to", "isomorphic to", 
-            "parallel to", "correlative to", "proportional to", "reciprocal to", "complementary to", 
-            "concomitant with", "the very same as", "equal in value to", "equal in meaning to", 
-            "functionally equivalent to", "logically equivalent to", "coincident with respect to", 
-            "coterminous with", "coequal to", "coincident in identity with", "coincides with", 
-            "corresponds exactly to", "amounts to"
+            "equivalent to", "identical to", "the same as", "the very same as",
+            "equal to", "equal in value to", "equal in meaning to",
+            "synonymous with", "interchangeable with", "indistinguishable from",
+            "coextensive with", "logically equivalent to", "functionally equivalent to",
+            "coincides with", "corresponds exactly to", "amounts to",
+            "tantamount to", "coterminous with", "coequal to"
         ], 
         asVerb: [
-            "matches", "coincides with", "is identical to", "equals", "corresponds to", 
-            "aligns with", "parallels", "mirrors", "reflects", "echoes", "resembles", 
-            "approximates", "approaches", "converges with", "unifies with", "merges with"
+            "matches", "coincides with", "is identical to", "equals"
         ] 
     },
     [RelationKey.DifferentFrom]: { 
         opposite: RelationKey.SameAs, 
         domains: ["generic"], 
         asPP: [
-            "different from", "distinct from", "dissimilar to", "contrary to", "opposite to", 
-            "divergent from", "disparate from", "incompatible with", "incongruent with", 
-            "antithetical to", "contradictory to", "inverse to", "discordant with", 
-            "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to", 
-            "orthogonal to", "mutually exclusive with", "at variance with", "at odds with", 
-            "not equivalent to", "not identical to", "not analogous to", "not correspondent to", 
-            "not the same as", "unequal to", "nonidentical to", "non-equivalent to", 
-            "inconsistent with", "incompatible with", "irreconcilable with", "diametrically opposed to"
+            "different from", "distinct from", "dissimilar to", "not the same as",
+            "unequal to", "nonidentical to", "non-equivalent to",
+            "not equivalent to", "not identical to",
+            "separate from", "set apart from"
         ], 
         asVerb: [
-            "differs from", "diverges from", "contrasts with", "opposes", "contradicts", 
-            "conflicts with", "clashes with", "disagrees with", "varies from", "deviates from", 
-            "departs from", "separates from", "distinguishes from", "differentiates from"
+            "differs from", "varies from", "separates from", "distinguishes from", "differentiates from"
         ] 
     },
 
@@ -114,8 +102,29 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.EqualTo]: { opposite: RelationKey.NotEqualTo, domains: ["numerical"], asPP: ["equal to"], asVerb: ["equals", "is equal to"] },
     [RelationKey.NotEqualTo]: { opposite: RelationKey.EqualTo, domains: ["numerical"], asPP: ["not equal to"], asVerb: ["differs from"] },
 
-    [RelationKey.Before]: { opposite: RelationKey.After, domains: ["temporal"], asPP: ["before", "earlier than", "prior to", "upstream of", "in advance of", "ahead of"], asVerb: ["precedes", "comes before", "leads"] },
-    [RelationKey.After]: { opposite: RelationKey.Before, domains: ["temporal"], asPP: ["after", "later than", "subsequent to", "downstream of", "following"], asVerb: ["follows", "comes after", "succeeds", "trails"] },
+    [RelationKey.Before]: { 
+        opposite: RelationKey.After, 
+        domains: ["temporal"], 
+        asPP: [
+            "before", "earlier than", "prior to", "preceding", "anterior to",
+            "comes before", "occurs before", "predates", "dated before", 
+            "takes place before", "falls before", "earlier in time than", 
+            "prior in time to", "antedates", "in advance of", "antecedent to"
+        ], 
+        asVerb: ["precedes", "comes before", "predates", "antedates"] 
+    },
+    [RelationKey.After]: { 
+        opposite: RelationKey.Before, 
+        domains: ["temporal"], 
+        asPP: [
+            "after", "later than", "subsequent to", "following", "posterior to",
+            "comes after", "occurs after", "postdates", "succeeds", 
+            "dated after", "takes place after", "later in time than",
+            "more recent than", "more current than", "more up-to-date than",
+            "succeeding", "ensuing", "falls after", "next after", "post", "beyond"
+        ], 
+        asVerb: ["follows", "comes after", "succeeds", "postdates"] 
+    },
     [RelationKey.ConcurrentWith]: { domains: ["temporal"], asPP: ["concurrent with", "at the same time as"], asVerb: ["coincides with", "overlaps with"] },
 
     [RelationKey.Since]: { domains: ["temporal"], asPP: ["since"], asVerb: [] },
@@ -157,9 +166,7 @@ export const RELATIONS: Record<RelationKey, Entry> = {
     [RelationKey.On]: { domains: ["spatial"], asPP: ["on"], asVerb: ["rests on", "sits on"] },
     [RelationKey.Under]: { domains: ["spatial"], asPP: ["under", "beneath"], asVerb: ["supports", "is under"] },
 
-    [RelationKey.ConnectedTo]: { opposite: RelationKey.DisconnectedFrom, domains: ["graph"], asPP: ["connected to", "linked to", "joined to", "bridged to", "tied to", "wired to", "adjacent to", "neighbors with", "sharing an edge with"], asVerb: ["connects to", "links to", "joins", "bridges to", "ties to", "wires to", "neighbors"] },
-    [RelationKey.DisconnectedFrom]: { opposite: RelationKey.ConnectedTo, domains: ["graph"], asPP: ["disconnected from", "separate from", "not connected to", "unlinked from", "unjoined to", "isolated from", "cut off from", "decoupled from", "disjoint from"], asVerb: ["disconnects from", "separates from", "isolates from", "decouples from", "unlinks from"] },
-
+    [RelationKey.IndependentOf]: {  domains: ["generic"], asPP: ["independent of"], asVerb: ["is independent of"] },
     [RelationKey.Confirms]: { opposite: RelationKey.Refutes, domains: ["generic"], asPP: ["confirmed by"], asVerb: ["confirms", "corroborates", "supports"] },
     [RelationKey.Refutes]: { opposite: RelationKey.Confirms, domains: ["generic"], asPP: ["refuted by"], asVerb: ["refutes", "contradicts", "disproves"] },
     [RelationKey.Supports]: { opposite: RelationKey.Undermines, domains: ["generic"], asPP: ["supported by"], asVerb: ["supports", "bolsters", "reinforces"] },
@@ -188,7 +195,7 @@ export function pickKeyForType(type: EnumQuestionType, positive: boolean) {
         case EnumQuestionType.Direction3DTemporal:
             return positive ? RelationKey.DownstreamOf : RelationKey.UpstreamOf;
         case EnumQuestionType.GraphMatching:
-            return positive ? RelationKey.ConnectedTo : RelationKey.DisconnectedFrom;
+            return RelationKey.IndependentOf;
         case EnumQuestionType.Analogy:
             return positive ? RelationKey.SameAs : RelationKey.DifferentFrom;
         case EnumQuestionType.Binary:

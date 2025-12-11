@@ -1,9 +1,9 @@
 import { Injectable } from "@angular/core";
 import { IArrangementPremise, IDirection3DProposition, IDirectionProposition, Question } from "../models/question.models";
-import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant, buildConnectedNarrative } from "../utils/question.utils";
+import { coinFlip, getCircularWays, getLinearWays, getRandomRuleValid, getRandomSymbols, getRelation, getRelationRich, getSymbols, isPremiseLikeConclusion, createMetaRelationships, metarelateArrangement, pickUniqueItems, horizontalShuffleArrangement, shuffle, interpolateArrangementRelationship, fixBinaryInstructions, getSyllogism, getRandomRuleInvalid, areGraphsIsomorphic, diversifyDistinctionConclusion, diversifyComparisonConclusion, formatRelation, shuffleWithinPremiseOrder, buildWhichClauseVariant } from "../utils/question.utils";
 import { NUMBER_WORDS } from "../constants/question.constants";
 import { EnumScreens, EnumTiers, ORDERED_QUESTION_TYPES, ORDERED_TIERS, TIER_SCORE_ADJUSTMENTS, TIER_SCORE_RANGES, TIERS_MATRIX } from "../constants/syllogimous.constants";
-import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER, LS_SPATIO_TEMPORAL_MODE, LS_CONNECTED_NARRATIVE_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_HIDE_INSTRUCTIONS } from "../constants/local-storage.constants";
+import { LS_DONT_SHOW, LS_HISTORY, LS_SCORE, LS_TIMER, LS_SPATIO_TEMPORAL_MODE, LS_INCLUSION_EXCLUSION_ONLY_MODE, LS_HIDE_INSTRUCTIONS } from "../constants/local-storage.constants";
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ModalLevelChangeComponent } from "../components/modal-level-change/modal-level-change.component";
 import { Router } from "@angular/router";
@@ -17,7 +17,6 @@ import { Logger } from "../utils/logger";
 import { GameTimerService } from "./game-timer.service";
 import { SpeechService } from "./speech.service"
 import { forEach, forEachRight } from "lodash";
-import { MatrixReasoningService } from "./matrix-reasoning.service";
 
 @Injectable({
     providedIn: "root"
@@ -45,7 +44,7 @@ export class SyllogimousService {
                 return tier as EnumTiers;
             }
         }
-        return EnumTiers.Adept;
+        return EnumTiers.Beginner;
     }
 
     get settings() {
@@ -66,8 +65,7 @@ export class SyllogimousService {
         private router: Router,
         private progressAndPerformanceService: ProgressAndPerformanceService,
         private gameTimerService: GameTimerService,
-        private speechService: SpeechService,
-        private matrixSrv: MatrixReasoningService
+        private speechService: SpeechService
     ) {
         this.loadScore();
         (window as any).syllogimous = this;
@@ -95,8 +93,6 @@ export class SyllogimousService {
         // Read feature flags from localStorage (set via Settings page)
         const st = localStorage.getItem(LS_SPATIO_TEMPORAL_MODE);
         settings.enabled.spatioTemporalMode = st === "true";
-        const cn = localStorage.getItem(LS_CONNECTED_NARRATIVE_MODE);
-        settings.enabled.connectedNarrativeMode = cn === "true";
         const ieOnly = localStorage.getItem(LS_INCLUSION_EXCLUSION_ONLY_MODE);
         settings.enabled.inclusionExclusionOnlyMode = ieOnly === "true";
 
@@ -143,60 +139,9 @@ export class SyllogimousService {
             [EnumQuestionType.Analogy]: () => this.createAnalogy(numOfPremises),
 
             [EnumQuestionType.Binary]: () => this.createBinary(numOfPremises),
-            [EnumQuestionType.MatrixReasoning]: () => this.createMatrixReasoning(numOfPremises),
             [EnumQuestionType.InclusionExclusion]: () => this.createInclusionExclusion(numOfPremises),
         }[questionType];
 
-    }
-
-    createMatrixReasoning(numOfPremises: number): Question {
-        this.logger.info("createMatrixReasoning");
-
-        const type = EnumQuestionType.MatrixReasoning;
-        const settings = this.settings;
-
-        if (!canGenerateQuestion(type, numOfPremises, settings)) {
-            throw new Error("Cannot generate.");
-        }
-
-        const question = new Question(type);
-        const seed = Date.now() & 0x7fffffff;
-        const result = this.matrixSrv.generate({ seed, level: 1, size: 3 });
-
-        // Map to existing UI representation (string matrix and option strings)
-        const toChar = (cell: any) => this.matrixSrv.cellToSymbol(cell);
-        const matrix: string[][] = [];
-        for (let r = 0; r < result.cells.length; r++) {
-            const row: string[] = [];
-            for (let c = 0; c < result.cells[r].length; c++) {
-                row.push((r === result.missing.row && c === result.missing.col) ? '?' : toChar(result.cells[r][c]));
-            }
-            matrix.push(row);
-        }
-
-        const correctCell = result.cells[result.missing.row][result.missing.col];
-        const correctAnswer = toChar(correctCell);
-        const options = result.options.map(toChar);
-        const correctOption = options[result.correctIndex];
-
-        question.seed = seed;
-        question.matrixRules = result.rules as any[];
-        question.explanation = result.explanation;
-        question.matrixCells = result.cells as any;
-        question.optionCells = result.options as any;
-
-        question.matrix = matrix;
-        question.missingPosition = { row: result.missing.row, col: result.missing.col };
-        question.options = options;
-        question.correctAnswer = correctOption;
-        question.isValid = true;
-
-        question.instructions = [
-            "Analyze the pattern in both rows and columns.",
-            "Select the missing piece that satisfies both constraints."
-        ];
-
-        return question;
     }
 
     private createDistinctionComparisonMatrix(): { matrix: string[][], missingAnswer: string } {
@@ -398,12 +343,6 @@ export class SyllogimousService {
         }
 
         const randomQuestion = pickUniqueItems(choices, 1).picked[0]();
-
-        // Attach connected narrative if enabled
-        if (settings.enabled.connectedNarrativeMode && randomQuestion.premises?.length) {
-            const narrative = buildConnectedNarrative(randomQuestion.premises);
-            randomQuestion.premises = [narrative];
-        }
 
         this.logger.info("Random question", randomQuestion);
         return randomQuestion;
@@ -1449,7 +1388,7 @@ export class SyllogimousService {
         const relationMiddle = (rel: "↔" | "→" | "←") => {
             let pool: RelationKey[];
             if (rel === "↔") {
-                pool = [RelationKey.ConnectedTo];
+                pool = [RelationKey.IndependentOf];
             } else if (rel === "→") {
                 pool = [RelationKey.Causes, RelationKey.Enables, RelationKey.UpstreamOf];
             } else { // "←"

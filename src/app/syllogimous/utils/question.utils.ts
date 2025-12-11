@@ -173,7 +173,7 @@ export const expressionVariants = {
       "divergent from", "disparate from", "incompatible with", "incongruent with",
       "antithetical to", "contradictory to", "inverse to", "discordant with",
       "heterogeneous to", "incommensurable with", "disproportionate to", "asymmetric to",
-      "orthogonal to", "mutually exclusive with", "at variance with", "at odds with",
+      "orthogonal to", "mutually exclusive with", "at odds with",
       "not equivalent to", "not identical to", "not analogous to", "not correspondent to",
       "distinct from", "divergent from", "differentiated from",
       "not the same as", "unequal to", "nonidentical to", "non-equivalent to",
@@ -213,29 +213,17 @@ export const expressionVariants = {
   ComparisonChronological: {
     positive: [
       "after", "later than", "subsequent to", "following", "posterior to",
-      "succeeding", "ensuing", "consequent to", "in the wake of", "downstream from",
-      "post", "beyond", "ahead of", "forward of", "advanced relative to",
-      "more recent than", "more contemporary than", "more modern than",
-      "more current than", "more up-to-date than", "more progressive than",
-      "chronologically superior to", "temporally advanced beyond",
-      "after", "following", "subsequent to", "later than",
       "comes after", "occurs after", "postdates", "succeeds",
-      "dated after", "takes place after", "follows upon",
-      "falls after", "arrives after", "posterior to",
-      "afterward of", "next after", "later in time than"
+      "dated after", "takes place after", "later in time than",
+      "more recent than", "more current than", "more up-to-date than",
+      "succeeding", "ensuing", "follows upon", "falls after", "next after", "post", "beyond"
     ],
     negative: [
       "before", "earlier than", "prior to", "preceding", "anterior to",
-      "antecedent to", "preliminary to", "preparatory to", "upstream from",
-      "pre", "in advance of", "prefatory to",
-      "more ancient than", "more archaic than", "more primitive than",
-      "more antiquated than", "more obsolete than", "more outdated than",
-      "chronologically inferior to", "temporally behind",
-      "before", "prior to", "preceding",
       "comes before", "occurs before", "predates", "precedes",
-      "dated before", "takes place before", "anterior to",
-      "earlier than", "falls before", "arrives before",
-      "prior in time to", "antedates", "leads", "earlier in time than"
+      "dated before", "takes place before", "falls before",
+      "earlier in time than", "prior in time to", "antedates",
+      "in advance of", "antecedent to"
     ]
   },
 
@@ -1683,55 +1671,3 @@ export function shuffleWithinPremiseOrder(premises: string[]): string[] {
     });
 }
 
-export function buildConnectedNarrative(premises: string[]): string {
-    const plain = premises.map(p => stripTags(p));
-
-    // Try to extract subjects and relation text: "A is REL B" or "A REL B"
-    const parsed = plain.map(line => {
-        const m1 = line.match(/^(.+?)\s+is\s+(.+?)\s+(.+)$/i);
-        if (m1) { return { a: m1[1], rel: m1[2], b: m1[3] }; }
-        const m2 = line.match(/^(.+?)\s+([^\s].*?)\s+(.+)$/i);
-        if (m2) { return { a: m2[1], rel: m2[2], b: m2[3] }; }
-        return { a: '', rel: line, b: '' };
-    });
-
-    const connectorFor = (rel: string) => {
-        const r = rel.toLowerCase();
-        if (/(before|after|during|throughout|earlier|later|prior|subsequent)/.test(r)) return 'Then,';
-        if (/(north|south|east|west|above|below|inside|outside|near|beside|adjacent|between|on|under|upstream|downstream)/.test(r)) return 'Meanwhile,';
-        if (/(because|causes|caused by|enables|inhibits|implies|contradicts|supports|undermines|confirms|refutes)/.test(r)) return 'As a result,';
-        return 'Moreover,';
-    };
-
-    const parts: string[] = [];
-    for (let i = 0; i < parsed.length; i++) {
-        const { a, rel, b } = parsed[i];
-        const left = a || 'Subject 1';
-        const right = b || 'Subject 2';
-        const which = buildWhichClauseVariant(left, rel, right);
-
-        let sentence: string;
-        if (which) {
-            sentence = which.trim();
-        } else {
-            const { needsCopula } = formatRelation(rel);
-            sentence = needsCopula
-                ? `${left} is ${rel} ${right}`
-                : `${left} ${rel} ${right}`;
-        }
-
-        // Ensure terminal punctuation for each clause
-        sentence = sentence.replace(/\s+/g, ' ').trim();
-        if (!/[.!?]$/.test(sentence)) {
-            sentence += '.';
-        }
-
-        if (i === 0) {
-            parts.push(sentence);
-        } else {
-            parts.push(`${connectorFor(rel)} ${sentence}`);
-        }
-    }
-
-    return parts.join(' ');
-}

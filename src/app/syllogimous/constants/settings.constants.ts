@@ -95,12 +95,6 @@ export const QUESTION_TYPE_SETTING_PARAMS: Record<EnumQuestionType, ISettingPara
         maxNumOfPremises: 20,
         basic: false
     },
-    [EnumQuestionType.MatrixReasoning]: {
-        enabled: false,
-        minNumOfPremises: 1,
-        maxNumOfPremises: 1,
-        basic: true
-    },
     [EnumQuestionType.InclusionExclusion]: {
         enabled: true,
         minNumOfPremises: 2,
@@ -117,7 +111,6 @@ export const DEFAULT_ENABLED_FLAGS = {
     speechMode: false,
     visualMode: false,
     spatioTemporalMode: false,
-    connectedNarrativeMode: false,
     inclusionExclusionOnlyMode: false,
     graphArrangementMode: false,
     binary: {

@@ -10,7 +10,7 @@ import { SyllogimousService } from 'src/app/syllogimous/services/syllogimous.ser
 export class TierStatsComponent {
     TIER_SCORE_RANGES = TIER_SCORE_RANGES;
     tiers = Object.values(EnumTiers);
-    nextTier = EnumTiers.Savant;
+    nextTier = EnumTiers.Apprentice;
     pointsRemaining = 0;
 
     constructor(

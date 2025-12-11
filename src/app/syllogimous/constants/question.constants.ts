@@ -12,7 +12,6 @@ export enum EnumQuestionType {
     GraphMatching = "Graph Matching",
     Analogy = "Analogy",
     Binary = "Binary",
-    MatrixReasoning = "Matrix Reasoning",
     InclusionExclusion = "Inclusion/Exclusion",
 }
 

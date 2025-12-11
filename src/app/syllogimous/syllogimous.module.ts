@@ -40,10 +40,8 @@ import { EnumScreens } from './constants/syllogimous.constants';
 import { TiersMatrixComponent } from './pages/tiers-matrix/tiers-matrix.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TutorialGraphMatchingComponent } from './pages/tutorial/graph-matching/graph-matching.component';
-import { TutorialMatrixReasoningComponent } from './pages/tutorial/matrix-reasoning/matrix-reasoning.component';
 import { GraphArrangementComponent } from './components/graph-arrangement/graph-arrangement.component';
 import { GlyphComponent } from './components/glyph/glyph.component';
-import { MatrixCanvasComponent } from './components/matrix-canvas/matrix-canvas.component';
 
 const routes: Routes = [
     {
@@ -75,7 +73,6 @@ const routes: Routes = [
                     { path: EnumQuestionType.GraphMatching, component: TutorialGraphMatchingComponent },
                     { path: EnumQuestionType.Analogy, component: TutorialAnalogyComponent },
                     { path: EnumQuestionType.Binary, component: TutorialBinaryComponent },
-                    { path: EnumQuestionType.MatrixReasoning, component: TutorialMatrixReasoningComponent },
                 ]
             },
             { path: EnumScreens.TiersMatrix, component: TiersMatrixComponent },
@@ -108,7 +105,6 @@ const routes: Routes = [
         TutorialGraphMatchingComponent,
         TutorialAnalogyComponent,
         TutorialBinaryComponent,
-        TutorialMatrixReasoningComponent,
         StatsComponent,
         AccuracyStatsComponent,
         ErrorAnalysisComponent,
@@ -124,7 +120,6 @@ const routes: Routes = [
         SettingsComponent,
         GraphArrangementComponent,
         GlyphComponent,
-        MatrixCanvasComponent,
     ],
     imports: [
         CommonModule,
