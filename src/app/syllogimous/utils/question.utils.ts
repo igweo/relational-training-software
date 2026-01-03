@@ -2,6 +2,7 @@ import { FORMS, NOUNS, NUMBER_WORDS, STRINGS, VALID_RULES } from "../constants/q
 import { EnumArrangements, EnumQuestionType } from "../constants/question.constants";
 import { IArrangementPremise, IArrangementRelationship, Question } from "../models/question.models";
 import { Settings, Picked } from "../models/settings.models";
+import { pickKeyForType, renderRelation} from "../constants/relations.constants";
 
 // Conclusion diversification strategies to prevent pattern memorization
 export enum ConclusionDiversificationStrategy {
@@ -520,66 +521,28 @@ export function diversifyComparisonConclusion(
     };
 }
 
-export function getRelation(settings: Settings, type: EnumQuestionType, isPositive: boolean) {
-    let positive = "";
-    let negative = "";
+export function getRelation(
+    settings: Settings,
+    type: EnumQuestionType,
+    isPositive: boolean
+) {
+    // pick the base (positive/negative) relation key
+    let key = pickKeyForType(type, isPositive);
 
-    switch (type) {
-        case EnumQuestionType.Distinction:
-            positive = randomFrom(expressionVariants.Distinction.positive);
-            negative = randomFrom(expressionVariants.Distinction.negative);
-            break;
-        case EnumQuestionType.ComparisonNumerical:
-            positive = randomFrom(expressionVariants.ComparisonNumerical.positive);
-            negative = randomFrom(expressionVariants.ComparisonNumerical.negative);
-            break;
-        case EnumQuestionType.ComparisonChronological:
-            positive = randomFrom(expressionVariants.ComparisonChronological.positive);
-            negative = randomFrom(expressionVariants.ComparisonChronological.negative);
-            break;
-        case EnumQuestionType.Direction:
-            positive = randomFrom(expressionVariants.Direction.positive);
-            negative = randomFrom(expressionVariants.Direction.negative);
-            break;
-        case EnumQuestionType.Direction3DSpatial:
-            positive = randomFrom(expressionVariants.Direction3DSpatial.positive);
-            negative = randomFrom(expressionVariants.Direction3DSpatial.negative);
-            break;
-        case EnumQuestionType.Direction3DTemporal:
-            positive = randomFrom(expressionVariants.Direction3DTemporal.positive);
-            negative = randomFrom(expressionVariants.Direction3DTemporal.negative);
-            break;
-        case EnumQuestionType.GraphMatching:
-            positive = randomFrom(expressionVariants.GraphMatching.positive);
-            negative = randomFrom(expressionVariants.GraphMatching.negative);
-            break;
-        case EnumQuestionType.Analogy:
-            positive = randomFrom(expressionVariants.Analogy.positive);
-            negative = randomFrom(expressionVariants.Analogy.negative);
-            break;
-        case EnumQuestionType.Binary:
-            positive = randomFrom(expressionVariants.Binary.positive);
-            negative = randomFrom(expressionVariants.Binary.negative);
-            break;
-        default:
-            // Fallback for any unhandled question types
-            positive = "related to";
-            negative = "unrelated to";
-            break;
-    }
-
-    let relation = isPositive ? positive : negative;
+    // optionally flip polarity if negation is enabled
     if (settings.enabled.negation && coinFlip()) {
-        switch (relation) {
-            case positive:
-                relation = `<span class="is-negated">${negative}</span>`;
-                break;
-            case negative:
-                relation = `<span class="is-negated">${positive}</span>`;
-                break;
-        }
+        key = pickKeyForType(type, !isPositive);
     }
-    return relation;
+
+    // render to text and copula info
+    const rendered = renderRelation(key);
+
+    // if negated, wrap the rendered text
+    if (settings.enabled.negation && coinFlip()) {
+        rendered.text = `<span class="is-negated">${rendered.text}</span>`;
+    }
+
+    return rendered.text;
 }
 export function createMetaRelationships(settings: Settings, question: Question, length: number) {
     // Substitute a variable number of premises with meta-relations

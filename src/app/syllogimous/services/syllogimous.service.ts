@@ -1177,11 +1177,11 @@ export class SyllogimousService {
         const readable = (edges: typeof edgeList, edge: typeof edgeList[0], negated = false, meta = false) => {
             const getSubject = (subject: string) => `<span class="subject">${subject}</span>`;
             const readMap = {
-                "→": "goes to",
-                "←": "comes from",
-                "↔": "is connected to"
+                "→": ["implies", "is upstream of", "is sufficent for", "is a subset of"],
+                "←": ["is downstream of"],
+                "↔": ["is logically equivalent to", "is parallel to"]
             };
-            let relationship = readMap[edge[1]];
+            let relationship: string = readMap[edge[1]][Math.floor(Math.random() * readMap[edge[1]].length)] 
             let isMetaRelated = false;
             if (meta) {
                 const getEdgeKey = (edge: typeof edgeList[0]) => [...edge].join(";");
